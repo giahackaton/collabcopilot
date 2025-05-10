@@ -21,6 +21,15 @@ import {
   DrawerTrigger 
 } from "@/components/ui/drawer";
 import { toast } from "sonner";
+import { useNavigate } from 'react-router-dom';
+import { 
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
 
 // ElevenLabs Voice Agent Component
 const VoiceAgent = ({ onMessage }: { onMessage: (content: string, isAI?: boolean) => void }) => {
@@ -82,10 +91,6 @@ const VoiceAgent = ({ onMessage }: { onMessage: (content: string, isAI?: boolean
   
   return (
     <div className="border rounded-lg p-4 shadow-sm bg-white mb-6">
-      <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
-        <Mic className="h-5 w-5 text-blue-600" />
-        Asistente de Voz
-      </h3>
       <div ref={widgetContainerRef} className="elevenlabs-convai-widget">
         {/* Aquí se montará dinámicamente el widget de ElevenLabs */}
       </div>
@@ -99,6 +104,8 @@ const MeetingPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+  const [showSearchModal, setShowSearchModal] = useState(false);
 
   // Auto-scroll to the bottom when messages change
   useEffect(() => {
@@ -166,6 +173,24 @@ const MeetingPage = () => {
         msg.sender.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : messages;
+
+  const handleViewProfile = () => {
+    toast.info("Visualizando perfil de usuario");
+    // Aquí podríamos navegar a una página de perfil en el futuro
+  };
+
+  const handleSearch = () => {
+    setShowSearchModal(true);
+  };
+
+  const handleExport = () => {
+    handleDownloadChat();
+  };
+
+  const handleDuplicate = () => {
+    toast.success("Reunión duplicada correctamente");
+    // Aquí podríamos duplicar la reunión en el futuro
+  };
 
   return (
     <div className="h-[calc(100vh-6rem)] flex flex-col">
@@ -273,7 +298,7 @@ const MeetingPage = () => {
           </form>
         </div>
 
-        {/* Voice agent sidebar - now persistent */}
+        {/* Voice agent sidebar - now persistent, but without the title */}
         <div className="w-80">
           <VoiceAgent onMessage={handleVoiceAgentMessage} />
           
@@ -353,19 +378,39 @@ const MeetingPage = () => {
               Acciones Rápidas
             </h3>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" size="sm" className="flex flex-col items-center py-3 h-auto">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex flex-col items-center py-3 h-auto"
+                onClick={handleViewProfile}
+              >
                 <User className="h-5 w-5 mb-1" />
                 <span className="text-xs">Perfil</span>
               </Button>
-              <Button variant="outline" size="sm" className="flex flex-col items-center py-3 h-auto">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex flex-col items-center py-3 h-auto"
+                onClick={handleSearch}
+              >
                 <Search className="h-5 w-5 mb-1" />
                 <span className="text-xs">Buscar</span>
               </Button>
-              <Button variant="outline" size="sm" className="flex flex-col items-center py-3 h-auto">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex flex-col items-center py-3 h-auto"
+                onClick={handleExport}
+              >
                 <Download className="h-5 w-5 mb-1" />
                 <span className="text-xs">Exportar</span>
               </Button>
-              <Button variant="outline" size="sm" className="flex flex-col items-center py-3 h-auto">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex flex-col items-center py-3 h-auto"
+                onClick={handleDuplicate}
+              >
                 <Copy className="h-5 w-5 mb-1" />
                 <span className="text-xs">Duplicar</span>
               </Button>
@@ -373,6 +418,55 @@ const MeetingPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Search Modal */}
+      <Dialog open={showSearchModal} onOpenChange={setShowSearchModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" /> Buscar en reuniones
+            </DialogTitle>
+          </DialogHeader>
+          <Command>
+            <CommandInput placeholder="Buscar reuniones o mensajes..." />
+            <CommandList>
+              <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+              <CommandGroup heading="Reuniones recientes">
+                <CommandItem onSelect={() => {
+                  toast.info("Navegando a reunión...");
+                  setShowSearchModal(false);
+                }}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>Sprint Planning - Mayo 2025</span>
+                </CommandItem>
+                <CommandItem onSelect={() => {
+                  toast.info("Navegando a reunión...");
+                  setShowSearchModal(false);
+                }}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>Daily Standup - Mayo 2025</span>
+                </CommandItem>
+              </CommandGroup>
+              <CommandGroup heading="Mensajes">
+                <CommandItem onSelect={() => {
+                  setSearchTerm("objetivos");
+                  setShowSearchModal(false);
+                }}>
+                  <Search className="mr-2 h-4 w-4" />
+                  <span>Buscar "objetivos"</span>
+                </CommandItem>
+                <CommandItem onSelect={() => {
+                  setSearchTerm("tareas");
+                  setShowSearchModal(false);
+                }}>
+                  <Search className="mr-2 h-4 w-4" />
+                  <span>Buscar "tareas"</span>
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
