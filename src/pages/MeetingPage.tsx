@@ -7,11 +7,45 @@ import { Message } from '@/types/meeting';
 
 // ElevenLabs Voice Agent Component
 const VoiceAgent = () => {
+  // Referencia al contenedor donde se montará el widget
+  const widgetContainerRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    // Cargamos el script de ElevenLabs
+    const script = document.createElement('script');
+    script.src = 'https://elevenlabs.io/convai-widget/index.js';
+    script.async = true;
+    script.type = 'text/javascript';
+    document.body.appendChild(script);
+    
+    // Una vez que el script está cargado, creamos manualmente el elemento personalizado
+    script.onload = () => {
+      if (widgetContainerRef.current) {
+        // Limpiamos el contenido anterior si existe
+        widgetContainerRef.current.innerHTML = '';
+        
+        // Creamos el elemento personalizado de manera dinámica
+        const convaiElement = document.createElement('elevenlabs-convai');
+        convaiElement.setAttribute('agent-id', 'qpL7DFiOttmlnC5ESiBo');
+        
+        // Añadimos el elemento al contenedor
+        widgetContainerRef.current.appendChild(convaiElement);
+      }
+    };
+    
+    return () => {
+      // Limpieza cuando el componente se desmonte
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []); // Solo se ejecuta una vez al montar el componente
+  
   return (
     <div className="border rounded-lg p-4 shadow-sm bg-white mb-6">
       <h3 className="text-lg font-medium mb-3">Asistente de Voz</h3>
-      <div className="elevenlabs-convai-widget">
-        <elevenlabs-convai agent-id="qpL7DFiOttmlnC5ESiBo"></elevenlabs-convai>
+      <div ref={widgetContainerRef} className="elevenlabs-convai-widget">
+        {/* Aquí se montará dinámicamente el widget de ElevenLabs */}
       </div>
     </div>
   );
@@ -28,19 +62,6 @@ const MeetingPage = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Initialize ElevenLabs widget script
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://elevenlabs.io/convai-widget/index.js';
-    script.async = true;
-    script.type = 'text/javascript';
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
@@ -55,6 +76,8 @@ const MeetingPage = () => {
     setMessages([...messages, newMessage]);
     setMessage('');
   };
+
+  // Eliminamos la inicialización duplicada del script de ElevenLabs ya que ahora está en el componente VoiceAgent
 
   return (
     <div className="h-[calc(100vh-6rem)] flex flex-col">
