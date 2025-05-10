@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,53 +10,58 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const VoiceAgent = ({ onMessage }: { onMessage: (content: string, isAI?: boolean) => void }) => {
   // Referencia al contenedor donde se montará el widget
   const widgetContainerRef = useRef<HTMLDivElement>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   useEffect(() => {
-    // Cargamos el script de ElevenLabs
-    const script = document.createElement('script');
-    script.src = 'https://elevenlabs.io/convai-widget/index.js';
-    script.async = true;
-    script.type = 'text/javascript';
-    document.body.appendChild(script);
+    // Cargamos el script de ElevenLabs solo una vez
+    if (!isInitialized) {
+      const script = document.createElement('script');
+      script.src = 'https://elevenlabs.io/convai-widget/index.js';
+      script.async = true;
+      script.type = 'text/javascript';
+      document.body.appendChild(script);
+      
+      // Una vez que el script está cargado, creamos manualmente el elemento personalizado
+      script.onload = () => {
+        if (widgetContainerRef.current) {
+          // Limpiamos el contenido anterior si existe
+          widgetContainerRef.current.innerHTML = '';
+          
+          // Creamos el elemento personalizado de manera dinámica
+          const convaiElement = document.createElement('elevenlabs-convai');
+          convaiElement.setAttribute('agent-id', 'qpL7DFiOttmlnC5ESiBo');
+          
+          // Añadimos el elemento al contenedor
+          widgetContainerRef.current.appendChild(convaiElement);
+          
+          // Configuramos la captura de mensajes del agente
+          window.addEventListener('message', handleMessage);
+          
+          setIsInitialized(true);
+        }
+      };
+    }
     
-    // Una vez que el script está cargado, creamos manualmente el elemento personalizado
-    script.onload = () => {
-      if (widgetContainerRef.current) {
-        // Limpiamos el contenido anterior si existe
-        widgetContainerRef.current.innerHTML = '';
-        
-        // Creamos el elemento personalizado de manera dinámica
-        const convaiElement = document.createElement('elevenlabs-convai');
-        convaiElement.setAttribute('agent-id', 'qpL7DFiOttmlnC5ESiBo');
-        
-        // Añadimos el elemento al contenedor
-        widgetContainerRef.current.appendChild(convaiElement);
-        
-        // Configuramos la captura de mensajes del agente
-        window.addEventListener('message', (event) => {
-          // Verificamos si el mensaje es del widget de ElevenLabs
-          if (event.data && typeof event.data === 'object' && 'source' in event.data && event.data.source === 'convai-widget') {
-            if (event.data.type === 'agent-response') {
-              // Enviamos el mensaje del agente al chat
-              onMessage(event.data.text || 'El asistente está procesando...');
-            }
-            // También podemos capturar cuando el usuario habla con el agente
-            if (event.data.type === 'user-input') {
-              onMessage(event.data.text || 'Enviando mensaje al asistente...', false);
-            }
-          }
-        });
+    // Función para manejar los mensajes del widget
+    const handleMessage = (event: MessageEvent) => {
+      // Verificamos si el mensaje es del widget de ElevenLabs
+      if (event.data && typeof event.data === 'object' && 'source' in event.data && event.data.source === 'convai-widget') {
+        if (event.data.type === 'agent-response') {
+          // Enviamos el mensaje del agente al chat
+          onMessage(event.data.text || 'El asistente está procesando...');
+        }
+        // También podemos capturar cuando el usuario habla con el agente
+        if (event.data.type === 'user-input') {
+          onMessage(event.data.text || 'Enviando mensaje al asistente...', false);
+        }
       }
     };
     
     return () => {
-      // Limpieza cuando el componente se desmonte
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-      window.removeEventListener('message', () => {});
+      // Solo eliminamos el event listener, pero mantenemos el script cargado
+      window.removeEventListener('message', handleMessage);
     };
-  }, []); // Solo se ejecuta una vez al montar el componente
+  }, [onMessage, isInitialized]); // Dependencias actualizadas
   
   return (
     <div className="border rounded-lg p-4 shadow-sm bg-white mb-6">
@@ -165,7 +171,7 @@ const MeetingPage = () => {
           </form>
         </div>
 
-        {/* Voice agent sidebar */}
+        {/* Voice agent sidebar - now persistent */}
         <div className="w-80">
           <VoiceAgent onMessage={handleVoiceAgentMessage} />
           
