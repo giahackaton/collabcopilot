@@ -10,7 +10,7 @@ import MeetingActions from '@/components/MeetingActions';
 import {
   MessageSquare, Send, Mic, User, Search, Download, Copy,
   UserPlus, Settings, MoreHorizontal, Play, PauseCircle, Clock, Calendar,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, AlertCircle
 } from 'lucide-react';
 import { 
   Dialog, DialogContent, DialogDescription, DialogHeader, 
@@ -47,6 +47,8 @@ const MeetingPage = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [isInviting, setIsInviting] = useState(false);
+  const [emailError, setEmailError] = useState('');
 
   // Fetch participants and messages when component mounts
   useEffect(() => {
@@ -75,8 +77,7 @@ const MeetingPage = () => {
 
   const fetchMessages = async () => {
     try {
-      // In a real application, you would fetch this from your database
-      // For now, we'll start with an empty array so users can add their own messages
+      // Real implementation would fetch messages from the database
       setMessages([]);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -134,21 +135,30 @@ const MeetingPage = () => {
     toast.success('Reunión duplicada');
   };
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailRegex.test(email);
+    
+    if (!isValid) {
+      setEmailError('Por favor ingresa un correo electrónico válido');
+    } else {
+      setEmailError('');
+    }
+    
+    return isValid;
+  };
+
   const inviteParticipant = async () => {
-    if (!newParticipant.trim()) return;
+    if (!newParticipant.trim() || !validateEmail(newParticipant)) return;
+    
+    setIsInviting(true);
     
     try {
-      // In a real implementation, you would send an invitation email
-      // For now, we'll simulate it with a toast message and add the participant
-      
       // Create a new participant object
       const newParticipantObj: Participant = {
         email: newParticipant,
         name: newParticipant.split('@')[0] || 'Invitado',
       };
-      
-      // Add to participants list
-      setParticipants(prev => [...prev, newParticipantObj]);
       
       // Send invitation email using edge function
       const { data, error } = await supabase.functions.invoke('send-invitation', {
@@ -159,14 +169,30 @@ const MeetingPage = () => {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error from send-invitation function:', error);
+        toast.error(`Error al enviar la invitación: ${error.message}`);
+        setIsInviting(false);
+        return;
+      }
       
+      if (!data?.success) {
+        console.error('Error response from send-invitation function:', data);
+        toast.error(`Error al enviar la invitación: ${data?.error || 'Error desconocido'}`);
+        setIsInviting(false);
+        return;
+      }
+      
+      // Add to participants list only if email was sent successfully
+      setParticipants(prev => [...prev, newParticipantObj]);
       toast.success(`Invitación enviada a ${newParticipant}`);
       setNewParticipant('');
       setShowParticipantsDialog(false);
     } catch (error) {
       console.error('Error sending invitation:', error);
       toast.error('Error al enviar la invitación');
+    } finally {
+      setIsInviting(false);
     }
   };
 
@@ -401,15 +427,30 @@ const MeetingPage = () => {
                 type="email"
                 placeholder="ejemplo@correo.com"
                 value={newParticipant}
-                onChange={(e) => setNewParticipant(e.target.value)}
+                onChange={(e) => {
+                  setNewParticipant(e.target.value);
+                  if (emailError) validateEmail(e.target.value);
+                }}
+                className={emailError ? "border-red-500" : ""}
               />
+              {emailError && (
+                <div className="flex items-center text-red-500 text-sm mt-1">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {emailError}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancelar</Button>
             </DialogClose>
-            <Button onClick={inviteParticipant} disabled={!newParticipant.trim()}>Invitar</Button>
+            <Button 
+              onClick={inviteParticipant} 
+              disabled={isInviting || !newParticipant.trim() || !!emailError}
+            >
+              {isInviting ? 'Enviando...' : 'Invitar'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
