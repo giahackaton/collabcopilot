@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/AuthContext';
 import { Message } from '@/types/meeting';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // ElevenLabs Voice Agent Component
-const VoiceAgent = () => {
+const VoiceAgent = ({ onMessage }: { onMessage: (content: string) => void }) => {
   // Referencia al contenedor donde se montará el widget
   const widgetContainerRef = useRef<HTMLDivElement>(null);
   
@@ -30,6 +31,21 @@ const VoiceAgent = () => {
         
         // Añadimos el elemento al contenedor
         widgetContainerRef.current.appendChild(convaiElement);
+        
+        // Configuramos la captura de mensajes del agente
+        window.addEventListener('message', (event) => {
+          // Verificamos si el mensaje es del widget de ElevenLabs
+          if (event.data && typeof event.data === 'object' && 'source' in event.data && event.data.source === 'convai-widget') {
+            if (event.data.type === 'agent-response') {
+              // Enviamos el mensaje del agente al chat
+              onMessage(event.data.text || 'El asistente está procesando...');
+            }
+            // También podemos capturar cuando el usuario habla con el agente
+            if (event.data.type === 'user-input') {
+              onMessage(event.data.text || 'Enviando mensaje al asistente...', false);
+            }
+          }
+        });
       }
     };
     
@@ -38,6 +54,7 @@ const VoiceAgent = () => {
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
+      window.removeEventListener('message', () => {});
     };
   }, []); // Solo se ejecuta una vez al montar el componente
   
@@ -76,8 +93,19 @@ const MeetingPage = () => {
     setMessages([...messages, newMessage]);
     setMessage('');
   };
-
-  // Eliminamos la inicialización duplicada del script de ElevenLabs ya que ahora está en el componente VoiceAgent
+  
+  // Función para agregar mensajes del asistente de voz al chat
+  const handleVoiceAgentMessage = (content: string, isAI: boolean = true) => {
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      content: content,
+      sender: isAI ? 'Asistente de Sprint' : session.user?.email || 'Usuario',
+      timestamp: new Date().toISOString(),
+      isAI: isAI
+    };
+    
+    setMessages(prevMessages => [...prevMessages, newMessage]);
+  };
 
   return (
     <div className="h-[calc(100vh-6rem)] flex flex-col">
@@ -91,7 +119,7 @@ const MeetingPage = () => {
       <div className="flex flex-1 gap-6">
         {/* Main chat area */}
         <div className="flex-1 flex flex-col">
-          <div className="flex-1 border rounded-lg p-4 bg-white overflow-auto mb-4">
+          <ScrollArea className="flex-1 border rounded-lg p-4 bg-white mb-4 h-[60vh]">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-gray-400">
                 <p>No hay mensajes aún. Inicia la conversación.</p>
@@ -125,7 +153,7 @@ const MeetingPage = () => {
                 <div ref={messagesEndRef} />
               </div>
             )}
-          </div>
+          </ScrollArea>
 
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <Input
@@ -140,7 +168,7 @@ const MeetingPage = () => {
 
         {/* Voice agent sidebar */}
         <div className="w-80">
-          <VoiceAgent />
+          <VoiceAgent onMessage={handleVoiceAgentMessage} />
           
           <div className="border rounded-lg p-4 shadow-sm bg-white">
             <h3 className="text-lg font-medium mb-3">Participantes</h3>
