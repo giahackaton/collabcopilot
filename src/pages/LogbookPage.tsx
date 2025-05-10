@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Book, Search, Plus, Calendar, User, Clock, Save } from 'lucide-react';
 
 const LogbookPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,7 +46,10 @@ const LogbookPage = () => {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Bitácora</h1>
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <Book className="h-8 w-8 text-blue-600" />
+          Bitácora
+        </h1>
         <p className="text-gray-500 mt-1">
           Registro de actividades y eventos del proyecto
         </p>
@@ -53,7 +57,10 @@ const LogbookPage = () => {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Añadir nueva entrada</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5 text-green-600" />
+            Añadir nueva entrada
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
@@ -63,18 +70,27 @@ const LogbookPage = () => {
             className="mb-4"
             rows={4}
           />
-          <Button onClick={handleAddEntry}>Guardar entrada</Button>
+          <Button onClick={handleAddEntry} className="flex items-center gap-2">
+            <Save className="h-4 w-4" />
+            Guardar entrada
+          </Button>
         </CardContent>
       </Card>
 
       <div className="flex mb-6">
-        <Input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar en la bitácora..."
-          className="max-w-sm"
-        />
-        <Button className="ml-4">Buscar</Button>
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar en la bitácora..."
+            className="pl-8"
+          />
+        </div>
+        <Button className="ml-4 flex items-center gap-2">
+          <Search className="h-4 w-4" />
+          Buscar
+        </Button>
       </div>
 
       <div className="space-y-4">
@@ -85,8 +101,14 @@ const LogbookPage = () => {
                 <div className="flex justify-between items-start mb-2">
                   <p className="text-gray-900">{entry.content}</p>
                   <div className="text-right">
-                    <p className="text-sm text-gray-500">{new Date(entry.date).toLocaleDateString()}</p>
-                    <p className="text-xs text-gray-400">{entry.author}</p>
+                    <p className="text-sm text-gray-500 flex items-center justify-end gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(entry.date).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs text-gray-400 flex items-center justify-end gap-1">
+                      <User className="h-3 w-3" />
+                      {entry.author}
+                    </p>
                   </div>
                 </div>
               </CardContent>

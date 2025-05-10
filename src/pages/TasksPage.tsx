@@ -4,6 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  CheckSquare, 
+  Search, 
+  AlertTriangle, 
+  Clock, 
+  CheckCircle, 
+  User, 
+  Calendar, 
+  Info
+} from 'lucide-react';
 
 const TasksPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,23 +55,45 @@ const TasksPage = () => {
     // Aquí se actualizaría el estado en la base de datos
   };
 
+  const getStatusIcon = (status: string) => {
+    switch(status) {
+      case 'pending':
+        return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+      case 'in-progress':
+        return <Clock className="h-4 w-4 text-blue-600" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Tareas Asignadas</h1>
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <CheckSquare className="h-8 w-8 text-blue-600" />
+          Tareas Asignadas
+        </h1>
         <p className="text-gray-500 mt-1">
           Gestiona y actualiza tus tareas pendientes
         </p>
       </div>
 
       <div className="flex mb-6">
-        <Input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar tareas..."
-          className="max-w-sm"
-        />
-        <Button className="ml-4">Buscar</Button>
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar tareas..."
+            className="pl-8"
+          />
+        </div>
+        <Button className="ml-4 flex items-center gap-2">
+          <Search className="h-4 w-4" />
+          Buscar
+        </Button>
       </div>
 
       <div className="space-y-4">
@@ -80,21 +112,42 @@ const TasksPage = () => {
                       {task.title}
                     </span>
                   </div>
-                  <span className="text-sm font-normal">
-                    {task.status === 'pending' && <span className="text-yellow-600">Pendiente</span>}
-                    {task.status === 'in-progress' && <span className="text-blue-600">En progreso</span>}
-                    {task.status === 'completed' && <span className="text-green-600">Completada</span>}
+                  <span className="text-sm font-normal flex items-center gap-1">
+                    {task.status === 'pending' && (
+                      <span className="flex items-center text-yellow-600 gap-1">
+                        {getStatusIcon('pending')} Pendiente
+                      </span>
+                    )}
+                    {task.status === 'in-progress' && (
+                      <span className="flex items-center text-blue-600 gap-1">
+                        {getStatusIcon('in-progress')} En progreso
+                      </span>
+                    )}
+                    {task.status === 'completed' && (
+                      <span className="flex items-center text-green-600 gap-1">
+                        {getStatusIcon('completed')} Completada
+                      </span>
+                    )}
                   </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 mb-3">{task.description}</p>
                 <div className="flex justify-between text-sm text-gray-500">
-                  <span>Asignada a: {task.assignedTo}</span>
-                  <span>Fecha límite: {new Date(task.dueDate).toLocaleDateString()}</span>
+                  <span className="flex items-center gap-1">
+                    <User className="h-4 w-4" />
+                    Asignada a: {task.assignedTo}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    Fecha límite: {new Date(task.dueDate).toLocaleDateString()}
+                  </span>
                 </div>
                 <div className="mt-4">
-                  <Button size="sm" variant="outline">Ver detalles</Button>
+                  <Button size="sm" variant="outline" className="flex items-center gap-2">
+                    <Info className="h-4 w-4" />
+                    Ver detalles
+                  </Button>
                 </div>
               </CardContent>
             </Card>

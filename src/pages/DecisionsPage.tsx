@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Search, FileText, Calendar, Tag, Filter } from 'lucide-react';
 
 const DecisionsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,20 +42,33 @@ const DecisionsPage = () => {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Buscar Decisiones</h1>
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <FileText className="h-8 w-8 text-blue-600" />
+          Buscar Decisiones
+        </h1>
         <p className="text-gray-500 mt-1">
           Encuentra decisiones tomadas en reuniones anteriores
         </p>
       </div>
 
       <div className="flex mb-6">
-        <Input
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar por contenido, etiqueta o reunión..."
-          className="max-w-sm"
-        />
-        <Button className="ml-4">Buscar</Button>
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar por contenido, etiqueta o reunión..."
+            className="pl-8"
+          />
+        </div>
+        <Button className="ml-4 flex items-center gap-2">
+          <Search className="h-4 w-4" />
+          Buscar
+        </Button>
+        <Button variant="outline" className="ml-2 flex items-center gap-2">
+          <Filter className="h-4 w-4" />
+          Filtrar
+        </Button>
       </div>
 
       <div className="space-y-4">
@@ -63,8 +77,12 @@ const DecisionsPage = () => {
             <Card key={decision.id}>
               <CardHeader className="pb-2">
                 <CardTitle className="flex justify-between items-center text-lg">
-                  <span>{decision.meetingTitle}</span>
-                  <span className="text-sm font-normal text-gray-500">
+                  <span className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    {decision.meetingTitle}
+                  </span>
+                  <span className="text-sm font-normal text-gray-500 flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
                     {new Date(decision.date).toLocaleDateString()}
                   </span>
                 </CardTitle>
@@ -75,8 +93,9 @@ const DecisionsPage = () => {
                   {decision.tags.map(tag => (
                     <span 
                       key={tag} 
-                      className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
+                      className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center gap-1"
                     >
+                      <Tag className="h-3 w-3" />
                       {tag}
                     </span>
                   ))}
