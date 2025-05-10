@@ -47,8 +47,8 @@ const AuthPage = () => {
         await signIn(data.email, data.password);
       } else {
         await signUp(data.email, data.password);
-        toast.success("Cuenta creada correctamente. Por favor, inicia sesión.");
-        setIsLogin(true);
+        toast.success("Cuenta creada correctamente. Ya puedes iniciar sesión.");
+        setIsLogin(true); // Cambiar a la pantalla de inicio de sesión después del registro
       }
     } catch (err) {
       console.error("Authentication error:", err);

@@ -12,15 +12,38 @@ const Dashboard = () => {
   // Función para crear el usuario de prueba
   const createTestUser = async () => {
     try {
+      // Primero crear el usuario a través de la autenticación
       const { data, error } = await supabase.auth.signUp({
         email: 'usuario1@copilot.com',
-        password: '123456'
+        password: '123456',
+        options: {
+          data: {
+            username: 'usuario1',
+            full_name: 'Usuario de Prueba',
+          }
+        }
       });
       
       if (error) {
         toast.error(`Error al crear usuario: ${error.message}`);
       } else {
-        toast.success('Usuario de prueba creado correctamente. Ya puedes iniciar sesión con: usuario1@copilot.com y contraseña: 123456');
+        // Si el usuario se creó correctamente, actualizar el perfil
+        if (data.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ 
+              email: 'usuario1@copilot.com',
+              password: '123456' // Nota: Esto es solo para fines de prueba
+            })
+            .eq('id', data.user.id);
+            
+          if (profileError) {
+            console.error("Error al actualizar perfil:", profileError);
+            toast.error(`Error al actualizar perfil: ${profileError.message}`);
+          } else {
+            toast.success('Usuario de prueba creado correctamente. Ya puedes iniciar sesión con: usuario1@copilot.com y contraseña: 123456');
+          }
+        }
       }
     } catch (err) {
       toast.error('Error inesperado al crear el usuario');

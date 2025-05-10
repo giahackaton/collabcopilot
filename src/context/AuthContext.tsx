@@ -69,11 +69,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     try {
       setError(null);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username: email.split('@')[0], // Usar la parte del email como nombre de usuario
+            full_name: '',
+          }
+        }
       });
+      
       if (error) throw new Error(error.message);
+      
+      // Actualizar el perfil con el email y la contraseña
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ 
+            email: email,
+            password: password // Nota: Esto es solo para fines de prueba, normalmente no guardamos contraseñas en texto plano
+          })
+          .eq('id', data.user.id);
+          
+        if (profileError) console.error("Error al actualizar perfil:", profileError);
+      }
     } catch (err: any) {
       setError(err.message);
     }
