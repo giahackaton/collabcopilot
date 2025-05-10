@@ -69,6 +69,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string) => {
     try {
       setError(null);
+      // Obtener la URL actual para usar como base para la redirección
+      const redirectUrl = window.location.origin;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -76,7 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           data: {
             username: email.split('@')[0], // Usar la parte del email como nombre de usuario
             full_name: '',
-          }
+          },
+          emailRedirectTo: redirectUrl + '/auth', // Redirigir a la página de autenticación después de verificar email
         }
       });
       
