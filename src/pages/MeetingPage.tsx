@@ -204,19 +204,8 @@ const MeetingPage = () => {
             </CardHeader>
             <CardContent>
               <div className="bg-blue-50 p-4 rounded-md text-center">
-                <Button variant="outline" onClick={toggleRecording} className="mb-2">
-                  {isRecording ? (
-                    <span className="flex items-center gap-2">
-                      <PauseCircle className="h-5 w-5 text-red-600" />
-                      Detener grabación
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <Play className="h-5 w-5 text-green-600" />
-                      Iniciar grabación
-                    </span>
-                  )}
-                </Button>
+                <elevenlabs-convai agent-id="qpL7DFiOttmlnC5ESiBo"></elevenlabs-convai>
+                <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
                 <p className="text-xs text-gray-500 mt-2">
                   El asistente transcribirá y analizará la conversación
                 </p>
