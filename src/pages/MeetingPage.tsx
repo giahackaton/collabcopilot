@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/context/AuthContext';
 import MeetingActions from '@/components/MeetingActions';
 import {
   MessageSquare, Send, Mic, User, Search, Download, Copy,
-  UserPlus, Settings, MoreHorizontal, Play, PauseCircle, Clock, Calendar
+  UserPlus, Settings, MoreHorizontal, Play, PauseCircle, Clock, Calendar,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { 
   Dialog, DialogContent, DialogDescription, DialogHeader, 
@@ -18,6 +19,21 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+
+interface Message {
+  id: string;
+  content: string;
+  sender: string;
+  sender_name?: string;
+  timestamp: string;
+  isAI: boolean;
+}
+
+interface Participant {
+  email: string;
+  name: string;
+  id?: string;
+}
 
 const MeetingPage = () => {
   const { session } = useAuth();
@@ -28,28 +44,77 @@ const MeetingPage = () => {
   const [newParticipant, setNewParticipant] = useState('');
   const [showUserProfileDialog, setShowUserProfileDialog] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
 
-  // Dummy messages
-  const messages = [
-    { id: '1', content: 'Bienvenidos a la reunión de sprint', sender: 'juan.perez@ejemplo.com', timestamp: '10:00', isAI: false },
-    { id: '2', content: 'Revisemos los objetivos alcanzados durante el último sprint', sender: 'maria.rodriguez@ejemplo.com', timestamp: '10:02', isAI: false },
-    { id: '3', content: '¿Podemos empezar por el proceso de autenticación?', sender: 'pedro.gomez@ejemplo.com', timestamp: '10:05', isAI: false },
-    { id: '4', content: 'Resumen de la conversación hasta ahora: Se está discutiendo los objetivos del sprint y se planea revisar el proceso de autenticación.', sender: 'ai-assistant', timestamp: '10:06', isAI: true },
-  ];
+  // Fetch participants and messages when component mounts
+  useEffect(() => {
+    if (session.user) {
+      fetchParticipants();
+      fetchMessages();
+    }
+  }, [session.user]);
 
-  // Dummy participants
-  const participants = [
-    { email: 'juan.perez@ejemplo.com', name: 'Juan Pérez' },
-    { email: 'maria.rodriguez@ejemplo.com', name: 'María Rodríguez' },
-    { email: 'pedro.gomez@ejemplo.com', name: 'Pedro Gómez' },
-  ];
+  const fetchParticipants = async () => {
+    try {
+      // In a real application, you would fetch this from your database
+      // For now we'll use local data but structured for future API integration
+      const currentUser = {
+        email: session.user?.email || 'usuario.actual@ejemplo.com',
+        name: userProfile?.full_name || session.user?.email?.split('@')[0] || 'Usuario Actual',
+        id: session.user?.id
+      };
+      
+      setParticipants([currentUser]);
+    } catch (error) {
+      console.error('Error fetching participants:', error);
+      toast.error('No se pudieron cargar los participantes');
+    }
+  };
+
+  const fetchMessages = async () => {
+    try {
+      // In a real application, you would fetch this from your database
+      // For now, we'll start with an empty array so users can add their own messages
+      setMessages([]);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      toast.error('No se pudieron cargar los mensajes');
+    }
+  };
 
   const sendMessage = () => {
     if (!message.trim()) return;
     
-    // Here we would normally send the message to the server
-    toast.success('Mensaje enviado');
+    // Create a new message
+    const newMessage: Message = {
+      id: crypto.randomUUID(),
+      content: message,
+      sender: session.user?.email || 'anonymous',
+      sender_name: userProfile?.full_name || session.user?.email?.split('@')[0] || 'Usuario',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isAI: false
+    };
+    
+    setMessages(prevMessages => [...prevMessages, newMessage]);
+    
+    // Generate AI response after a short delay
+    setTimeout(() => {
+      const aiResponse: Message = {
+        id: crypto.randomUUID(),
+        content: 'He registrado tu mensaje y lo tendré en cuenta para el resumen de la reunión.',
+        sender: 'ai-assistant',
+        sender_name: 'Asistente IA',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isAI: true
+      };
+      
+      setMessages(prevMessages => [...prevMessages, aiResponse]);
+    }, 1000);
+    
     setMessage('');
+    toast.success('Mensaje enviado');
   };
 
   const toggleRecording = () => {
@@ -69,13 +134,40 @@ const MeetingPage = () => {
     toast.success('Reunión duplicada');
   };
 
-  const inviteParticipant = () => {
+  const inviteParticipant = async () => {
     if (!newParticipant.trim()) return;
     
-    // Here we would normally send an invitation to the participant
-    toast.success(`Invitación enviada a ${newParticipant}`);
-    setNewParticipant('');
-    setShowParticipantsDialog(false);
+    try {
+      // In a real implementation, you would send an invitation email
+      // For now, we'll simulate it with a toast message and add the participant
+      
+      // Create a new participant object
+      const newParticipantObj: Participant = {
+        email: newParticipant,
+        name: newParticipant.split('@')[0] || 'Invitado',
+      };
+      
+      // Add to participants list
+      setParticipants(prev => [...prev, newParticipantObj]);
+      
+      // Send invitation email using edge function
+      const { data, error } = await supabase.functions.invoke('send-invitation', {
+        body: {
+          email: newParticipant,
+          sender: session.user?.email,
+          meetingTitle: 'Sprint Planning - Mayo 2025'
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success(`Invitación enviada a ${newParticipant}`);
+      setNewParticipant('');
+      setShowParticipantsDialog(false);
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      toast.error('Error al enviar la invitación');
+    }
   };
 
   const fetchUserProfile = async () => {
@@ -98,10 +190,8 @@ const MeetingPage = () => {
     }
   };
 
-  const handleFinishMeeting = () => {
-    // Generate meeting summary dialog or navigate to summary page
-    navigate('/summaries');
-    toast.success('Reunión finalizada. Generando resumen...');
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
   return (
@@ -119,12 +209,12 @@ const MeetingPage = () => {
           </p>
           <p className="text-gray-500 flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            Duración: 45:12
+            Duración: <span id="meeting-duration">00:00</span>
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
         {/* Chat section */}
         <div className="lg:col-span-2 flex flex-col">
           <Card className="flex-1 overflow-hidden">
@@ -149,15 +239,22 @@ const MeetingPage = () => {
                     <div className={`max-w-[80%] ${msg.isAI ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'} rounded-lg p-3 shadow-sm`}>
                       <div className="flex items-center gap-2 mb-1">
                         <Avatar className="h-6 w-6">
-                          <AvatarFallback>{msg.sender[0]}</AvatarFallback>
+                          <AvatarFallback>{(msg.sender_name || msg.sender)[0]}</AvatarFallback>
                         </Avatar>
-                        <span className="text-xs font-medium">{msg.isAI ? 'AI Assistant' : msg.sender}</span>
+                        <span className="text-xs font-medium">{msg.isAI ? 'AI Assistant' : msg.sender_name || msg.sender}</span>
                         <span className="text-xs text-gray-500">{msg.timestamp}</span>
                       </div>
                       <p className="text-sm">{msg.content}</p>
                     </div>
                   </div>
                 ))}
+                {messages.length === 0 && (
+                  <div className="flex justify-center items-center h-40">
+                    <p className="text-gray-500 text-center">
+                      No hay mensajes aún. ¡Comienza la conversación!
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="border-t p-4">
                 <div className="flex items-center gap-2">
@@ -192,8 +289,20 @@ const MeetingPage = () => {
           </div>
         </div>
 
+        {/* Toggle sidebar button */}
+        <div className="absolute top-1/2 -translate-y-1/2 right-0 lg:right-auto lg:left-0 z-10">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="hidden lg:flex bg-white shadow-md rounded-full"
+            onClick={toggleSidebar}
+          >
+            {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        </div>
+
         {/* Right sidebar */}
-        <div className="space-y-6">
+        <div className={`space-y-6 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'lg:hidden' : 'block'}`}>
           {/* Voice assistant section */}
           <Card>
             <CardHeader className="pb-2">
@@ -205,7 +314,6 @@ const MeetingPage = () => {
             <CardContent>
               <div className="bg-blue-50 p-4 rounded-md text-center">
                 <elevenlabs-convai agent-id="qpL7DFiOttmlnC5ESiBo"></elevenlabs-convai>
-                <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
                 <p className="text-xs text-gray-500 mt-2">
                   El asistente transcribirá y analizará la conversación
                 </p>
