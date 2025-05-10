@@ -13,8 +13,8 @@ import {
   LogIn,
   Layers,
   Menu,
-  X,
-  User
+  User,
+  Settings
 } from 'lucide-react';
 import {
   Sheet,
@@ -25,15 +25,18 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import Sidebar from '@/components/ui/sidebar';
+import UserProfileDialog from '@/components/UserProfileDialog';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { session, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Don't show navigation on auth pages
   if (location.pathname === '/auth') {
@@ -59,7 +62,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         onClick={closeMenu}
       >
         <Icon className="h-4 w-4" />
-        <span className="truncate">{text}</span>
+        {!sidebarCollapsed && <span className="truncate">{text}</span>}
       </Link>
     );
   };
@@ -68,24 +71,26 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
-        <Sidebar>
+        <Sidebar defaultCollapsed={sidebarCollapsed}>
           <div className="mb-6">
-            <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
+            <h1 className={`text-xl font-bold text-blue-600 flex items-center gap-2 ${sidebarCollapsed ? "justify-center" : ""}`}>
               <Layers className="h-5 w-5" />
-              <span className="truncate">CollabCopilot1.0</span>
+              {!sidebarCollapsed && <span className="truncate">CollabCopilot1.0</span>}
             </h1>
           </div>
 
           <div>
             {session.user && (
-              <div className="mb-6 p-3 bg-blue-50 rounded-lg flex items-center gap-3">
+              <div className={`mb-6 p-3 bg-blue-50 rounded-lg flex ${sidebarCollapsed ? "flex-col" : ""} items-center gap-3`}>
                 <Avatar className="h-10 w-10 shrink-0">
                   <AvatarFallback>{session.user.email?.[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{session.user.email}</p>
-                  <p className="text-xs text-gray-500 truncate">Sesión activa</p>
-                </div>
+                {!sidebarCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{session.user.email}</p>
+                    <p className="text-xs text-gray-500 truncate">Sesión activa</p>
+                  </div>
+                )}
               </div>
             )}
             
@@ -111,13 +116,24 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <li>
                       {renderLinkItem('/decisions', Search, 'Buscar Decisiones')}
                     </li>
+                    <li className={`p-2 ${sidebarCollapsed ? "text-center" : ""}`}>
+                      <Button 
+                        variant="outline" 
+                        size={sidebarCollapsed ? "icon" : "default"}
+                        onClick={() => setIsUserProfileOpen(true)}
+                        className="w-full"
+                      >
+                        <User className="h-4 w-4" />
+                        {!sidebarCollapsed && <span className="ml-2">Perfil</span>}
+                      </Button>
+                    </li>
                     <li className="pt-4 mt-4 border-t">
                       <button 
                         onClick={handleSignOut}
-                        className="w-full text-left flex items-center gap-2 p-2 rounded hover:bg-red-100 text-red-600"
+                        className={`w-full text-left flex items-center gap-2 p-2 rounded hover:bg-red-100 text-red-600 ${sidebarCollapsed ? "justify-center" : ""}`}
                       >
                         <LogOut className="h-4 w-4" />
-                        <span className="truncate">Cerrar Sesión</span>
+                        {!sidebarCollapsed && <span className="truncate">Cerrar Sesión</span>}
                       </button>
                     </li>
                   </>
@@ -187,6 +203,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         <li>
                           {renderLinkItem('/decisions', Search, 'Buscar Decisiones', () => setIsMobileMenuOpen(false))}
                         </li>
+                        <li>
+                          <SheetClose asChild>
+                            <Button 
+                              variant="outline" 
+                              className="w-full flex items-center gap-2 justify-start"
+                              onClick={() => {
+                                setIsMobileMenuOpen(false);
+                                setTimeout(() => setIsUserProfileOpen(true), 100);
+                              }}
+                            >
+                              <User className="h-4 w-4" />
+                              Perfil
+                            </Button>
+                          </SheetClose>
+                        </li>
                         <li className="pt-4 mt-4 border-t">
                           <SheetClose asChild>
                             <button 
@@ -218,6 +249,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <main className="flex-1 p-4 md:p-8 md:pt-8 pt-20 overflow-x-hidden">
         {children}
       </main>
+      
+      {/* User Profile Dialog */}
+      <UserProfileDialog 
+        open={isUserProfileOpen} 
+        onOpenChange={setIsUserProfileOpen} 
+      />
     </div>
   );
 };

@@ -27,7 +27,7 @@ const Sidebar = ({ children, className = "", defaultCollapsed = false }: Sidebar
       >
         <div className={cn(
           "p-4", 
-          collapsed ? "items-center" : ""
+          collapsed ? "flex flex-col items-center" : ""
         )}>
           {children}
         </div>

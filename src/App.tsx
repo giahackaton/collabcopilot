@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from '@/context/AuthContext';
-import Layout from "@/pages/Layout";  // Using the Layout from pages
+import Layout from "@/pages/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Pages
@@ -19,7 +19,14 @@ import TasksPage from "./pages/TasksPage";
 import DecisionsPage from "./pages/DecisionsPage";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
