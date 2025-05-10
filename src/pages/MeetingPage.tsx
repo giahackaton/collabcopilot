@@ -30,6 +30,7 @@ const VoiceAgent = ({ onMessage }: { onMessage: (content: string, isAI?: boolean
           // Creamos el elemento personalizado de manera dinámica
           const convaiElement = document.createElement('elevenlabs-convai');
           convaiElement.setAttribute('agent-id', 'qpL7DFiOttmlnC5ESiBo');
+          convaiElement.setAttribute('button-text', 'Hablar con Asistente');
           
           // Añadimos el elemento al contenedor
           widgetContainerRef.current.appendChild(convaiElement);
