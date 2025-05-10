@@ -1,0 +1,55 @@
+
+import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+
+export const useMeetingSummary = () => {
+  const [loading, setLoading] = useState(false);
+  const { session } = useAuth();
+  const navigate = useNavigate();
+
+  const generateSummary = async (title: string, content: string, participants: string[]) => {
+    if (!session.user) {
+      toast.error('Debes iniciar sesión para generar resúmenes');
+      return false;
+    }
+
+    if (!title || !content) {
+      toast.error('El título y el contenido son obligatorios');
+      return false;
+    }
+
+    try {
+      setLoading(true);
+      toast.info('Generando resumen de la reunión...');
+
+      const { data, error } = await supabase.functions.invoke('generate-summary', {
+        body: {
+          title,
+          content,
+          participants,
+          user_id: session.user.id
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success('Resumen generado correctamente');
+      navigate('/summaries');
+      return true;
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      toast.error('Ocurrió un error al generar el resumen');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    generateSummary,
+    loading
+  };
+};

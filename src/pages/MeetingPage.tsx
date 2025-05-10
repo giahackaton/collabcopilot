@@ -1,470 +1,352 @@
-
-import React, { useEffect, useState, useRef } from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useAuth } from '@/context/AuthContext';
-import { Message } from '@/types/meeting';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, MessageSquare, User, Users, Copy, Download, Mic, MoreHorizontal, Search } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger
-} from "@/components/ui/dialog";
-import { 
-  Drawer, 
-  DrawerContent, 
-  DrawerHeader, 
-  DrawerTitle,
-  DrawerTrigger 
-} from "@/components/ui/drawer";
-import { toast } from "sonner";
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from '@/context/AuthContext';
+import MeetingActions from '@/components/MeetingActions';
+import {
+  MessageSquare, Send, Mic, User, Search, Download, Copy,
+  UserPlus, Settings, MoreHorizontal, Play, PauseCircle, Clock, Calendar
+} from 'lucide-react';
 import { 
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
-
-// ElevenLabs Voice Agent Component
-const VoiceAgent = ({ onMessage }: { onMessage: (content: string, isAI?: boolean) => void }) => {
-  // Referencia al contenedor donde se montará el widget
-  const widgetContainerRef = useRef<HTMLDivElement>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  
-  useEffect(() => {
-    // Cargamos el script de ElevenLabs solo una vez
-    if (!isInitialized) {
-      const script = document.createElement('script');
-      script.src = 'https://elevenlabs.io/convai-widget/index.js';
-      script.async = true;
-      script.type = 'text/javascript';
-      document.body.appendChild(script);
-      
-      // Una vez que el script está cargado, creamos manualmente el elemento personalizado
-      script.onload = () => {
-        if (widgetContainerRef.current) {
-          // Limpiamos el contenido anterior si existe
-          widgetContainerRef.current.innerHTML = '';
-          
-          // Creamos el elemento personalizado de manera dinámica
-          const convaiElement = document.createElement('elevenlabs-convai');
-          convaiElement.setAttribute('agent-id', 'qpL7DFiOttmlnC5ESiBo');
-          convaiElement.setAttribute('button-text', 'Hablar con Asistente');
-          
-          // Añadimos el elemento al contenedor
-          widgetContainerRef.current.appendChild(convaiElement);
-          
-          // Configuramos la captura de mensajes del agente
-          window.addEventListener('message', handleMessage);
-          
-          setIsInitialized(true);
-        }
-      };
-    }
-    
-    // Función para manejar los mensajes del widget
-    const handleMessage = (event: MessageEvent) => {
-      // Verificamos si el mensaje es del widget de ElevenLabs
-      if (event.data && typeof event.data === 'object' && 'source' in event.data && event.data.source === 'convai-widget') {
-        if (event.data.type === 'agent-response') {
-          // Enviamos el mensaje del agente al chat
-          onMessage(event.data.text || 'El asistente está procesando...');
-        }
-        // También podemos capturar cuando el usuario habla con el agente
-        if (event.data.type === 'user-input') {
-          onMessage(event.data.text || 'Enviando mensaje al asistente...', false);
-        }
-      }
-    };
-    
-    return () => {
-      // Solo eliminamos el event listener, pero mantenemos el script cargado
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [onMessage, isInitialized]); // Dependencias actualizadas
-  
-  return (
-    <div className="border rounded-lg p-4 shadow-sm bg-white mb-6">
-      <div ref={widgetContainerRef} className="elevenlabs-convai-widget">
-        {/* Aquí se montará dinámicamente el widget de ElevenLabs */}
-      </div>
-    </div>
-  );
-};
+  Dialog, DialogContent, DialogDescription, DialogHeader, 
+  DialogTitle, DialogTrigger, DialogFooter, DialogClose 
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const MeetingPage = () => {
   const { session } = useAuth();
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
-  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [message, setMessage] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
+  const [newParticipant, setNewParticipant] = useState('');
+  const [showUserProfileDialog, setShowUserProfileDialog] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
-  // Auto-scroll to the bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  // Dummy messages
+  const messages = [
+    { id: '1', content: 'Bienvenidos a la reunión de sprint', sender: 'juan.perez@ejemplo.com', timestamp: '10:00', isAI: false },
+    { id: '2', content: 'Revisemos los objetivos alcanzados durante el último sprint', sender: 'maria.rodriguez@ejemplo.com', timestamp: '10:02', isAI: false },
+    { id: '3', content: '¿Podemos empezar por el proceso de autenticación?', sender: 'pedro.gomez@ejemplo.com', timestamp: '10:05', isAI: false },
+    { id: '4', content: 'Resumen de la conversación hasta ahora: Se está discutiendo los objetivos del sprint y se planea revisar el proceso de autenticación.', sender: 'ai-assistant', timestamp: '10:06', isAI: true },
+  ];
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
+  // Dummy participants
+  const participants = [
+    { email: 'juan.perez@ejemplo.com', name: 'Juan Pérez' },
+    { email: 'maria.rodriguez@ejemplo.com', name: 'María Rodríguez' },
+    { email: 'pedro.gomez@ejemplo.com', name: 'Pedro Gómez' },
+  ];
+
+  const sendMessage = () => {
     if (!message.trim()) return;
     
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content: message,
-      sender: session.user?.email || 'Usuario',
-      timestamp: new Date().toISOString(),
-    };
-    
-    setMessages([...messages, newMessage]);
+    // Here we would normally send the message to the server
+    toast.success('Mensaje enviado');
     setMessage('');
   };
-  
-  // Función para agregar mensajes del asistente de voz al chat
-  const handleVoiceAgentMessage = (content: string, isAI: boolean = true) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content: content,
-      sender: isAI ? 'Asistente de Sprint' : session.user?.email || 'Usuario',
-      timestamp: new Date().toISOString(),
-      isAI: isAI
-    };
+
+  const toggleRecording = () => {
+    setIsRecording(!isRecording);
+    toast.info(isRecording ? 'Grabación detenida' : 'Grabación iniciada');
+  };
+
+  const searchInMeeting = () => {
+    toast.info('Búsqueda en reunión');
+  };
+
+  const exportMeeting = () => {
+    toast.success('Reunión exportada');
+  };
+
+  const duplicateMeeting = () => {
+    toast.success('Reunión duplicada');
+  };
+
+  const inviteParticipant = () => {
+    if (!newParticipant.trim()) return;
     
-    setMessages(prevMessages => [...prevMessages, newMessage]);
+    // Here we would normally send an invitation to the participant
+    toast.success(`Invitación enviada a ${newParticipant}`);
+    setNewParticipant('');
+    setShowParticipantsDialog(false);
   };
 
-  const handleCopyMessages = () => {
-    const messagesText = messages.map(msg => 
-      `${msg.sender} (${new Date(msg.timestamp).toLocaleString()}): ${msg.content}`
-    ).join('\n\n');
+  const fetchUserProfile = async () => {
+    if (!session.user) return;
     
-    navigator.clipboard.writeText(messagesText)
-      .then(() => toast.success("Mensajes copiados al portapapeles"))
-      .catch(err => toast.error("Error al copiar: " + err));
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (error) throw error;
+      
+      setUserProfile(data);
+      setShowUserProfileDialog(true);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast.error('No se pudo cargar el perfil del usuario');
+    }
   };
 
-  const handleDownloadChat = () => {
-    const messagesText = messages.map(msg => 
-      `${msg.sender} (${new Date(msg.timestamp).toLocaleString()}): ${msg.content}`
-    ).join('\n\n');
-    
-    const blob = new Blob([messagesText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `reunion-${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Chat descargado correctamente");
-  };
-  
-  const filteredMessages = searchTerm 
-    ? messages.filter(msg => 
-        msg.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        msg.sender.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : messages;
-
-  const handleViewProfile = () => {
-    toast.info("Visualizando perfil de usuario");
-    // Aquí podríamos navegar a una página de perfil en el futuro
-  };
-
-  const handleSearch = () => {
-    setShowSearchModal(true);
-  };
-
-  const handleExport = () => {
-    handleDownloadChat();
-  };
-
-  const handleDuplicate = () => {
-    toast.success("Reunión duplicada correctamente");
-    // Aquí podríamos duplicar la reunión en el futuro
+  const handleFinishMeeting = () => {
+    // Generate meeting summary dialog or navigate to summary page
+    navigate('/summaries');
+    toast.success('Reunión finalizada. Generando resumen...');
   };
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col">
+    <div className="flex flex-col h-full">
+      {/* Meeting header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-          <MessageSquare className="h-8 w-8 text-blue-600" /> 
+          <MessageSquare className="h-8 w-8 text-blue-600" />
           Reunión Activa
         </h1>
-        <p className="text-gray-500 mt-1">
-          Participa en la reunión activa con el asistente
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-gray-500 flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Sprint Planning - Mayo 2025
+          </p>
+          <p className="text-gray-500 flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Duración: 45:12
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-1 gap-6">
-        {/* Main chat area */}
-        <div className="flex-1 flex flex-col">
-          {/* Chat toolbar */}
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleCopyMessages} 
-                className="flex items-center gap-1"
-              >
-                <Copy className="h-4 w-4" /> Copiar
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleDownloadChat}
-                className="flex items-center gap-1"
-              >
-                <Download className="h-4 w-4" /> Descargar
-              </Button>
-            </div>
-            <div className="relative w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar en el chat..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-          </div>
-        
-          <ScrollArea className="flex-1 border rounded-lg p-4 bg-white mb-4 h-[60vh]">
-            {filteredMessages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                <MessageSquare className="h-12 w-12 mb-2 opacity-30" />
-                <p>No hay mensajes aún. Inicia la conversación.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {filteredMessages.map((msg) => (
-                  <div 
-                    key={msg.id} 
-                    className={`flex ${
-                      msg.isAI ? 'justify-start' : 'justify-end'
-                    }`}
-                  >
-                    <div 
-                      className={`max-w-[70%] p-3 rounded-lg ${
-                        msg.isAI 
-                          ? 'bg-gray-100 text-gray-800' 
-                          : 'bg-blue-500 text-white'
-                      }`}
-                    >
-                      <div className="font-medium text-sm mb-1 flex items-center gap-1">
-                        {msg.isAI ? (
-                          <>
-                            <User className="h-3 w-3" />
-                            {msg.sender}
-                          </>
-                        ) : (
-                          <>
-                            {msg.sender}
-                            <User className="h-3 w-3" />
-                          </>
-                        )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Chat section */}
+        <div className="lg:col-span-2 flex flex-col">
+          <Card className="flex-1 overflow-hidden">
+            <CardHeader className="border-b p-4">
+              <CardTitle className="text-xl flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-blue-600" />
+                  Chat de la Reunión
+                </div>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="outline" onClick={() => setShowParticipantsDialog(true)}>
+                    <UserPlus className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-2">Invitar</span>
+                  </Button>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="h-[50vh] overflow-y-auto p-4 space-y-4">
+                {messages.map((msg) => (
+                  <div key={msg.id} className={`flex ${msg.isAI ? 'justify-start' : 'justify-end'}`}>
+                    <div className={`max-w-[80%] ${msg.isAI ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'} rounded-lg p-3 shadow-sm`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback>{msg.sender[0]}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs font-medium">{msg.isAI ? 'AI Assistant' : msg.sender}</span>
+                        <span className="text-xs text-gray-500">{msg.timestamp}</span>
                       </div>
-                      <p>{msg.content}</p>
-                      <div className="text-xs opacity-70 text-right mt-1">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </div>
+                      <p className="text-sm">{msg.content}</p>
                     </div>
                   </div>
                 ))}
-                <div ref={messagesEndRef} />
               </div>
-            )}
-          </ScrollArea>
-
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <Input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Escribe un mensaje..."
-              className="flex-1"
-            />
-            <Button type="submit" className="flex items-center gap-1">
-              <Send className="h-4 w-4" /> Enviar
-            </Button>
-          </form>
+              <div className="border-t p-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={toggleRecording}
+                    className={isRecording ? 'bg-red-100 text-red-600 hover:bg-red-200' : ''}
+                  >
+                    {isRecording ? <PauseCircle className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                  </Button>
+                  <div className="flex-1 relative">
+                    <Input
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Escribe un mensaje..."
+                      className="pr-10"
+                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    />
+                  </div>
+                  <Button onClick={sendMessage} disabled={!message.trim()}>
+                    <Send className="h-5 w-5" />
+                    <span className="ml-2 hidden sm:inline">Enviar</span>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <div className="mt-6">
+            <MeetingActions messages={messages} participants={participants} />
+          </div>
         </div>
 
-        {/* Voice agent sidebar - now persistent, but without the title */}
-        <div className="w-80">
-          <VoiceAgent onMessage={handleVoiceAgentMessage} />
-          
-          <div className="border rounded-lg p-4 shadow-sm bg-white mb-6">
-            <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-600" />
-              Participantes
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span className="flex items-center gap-1">
-                    <User className="h-4 w-4 text-gray-600" />
-                    {session.user?.email || 'Usuario'} (Tú)
-                  </span>
-                </div>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+        {/* Right sidebar */}
+        <div className="space-y-6">
+          {/* Voice assistant section */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Mic className="h-5 w-5 text-blue-600" />
+                <span>Widget de Asistente</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-blue-50 p-4 rounded-md text-center">
+                <Button variant="outline" onClick={toggleRecording} className="mb-2">
+                  {isRecording ? (
+                    <span className="flex items-center gap-2">
+                      <PauseCircle className="h-5 w-5 text-red-600" />
+                      Detener grabación
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Play className="h-5 w-5 text-green-600" />
+                      Iniciar grabación
+                    </span>
+                  )}
+                </Button>
+                <p className="text-xs text-gray-500 mt-2">
+                  El asistente transcribirá y analizará la conversación
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick actions */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Settings className="h-5 w-5 text-blue-600" />
+                Acciones Rápidas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" onClick={fetchUserProfile} className="flex-col h-24 space-y-2">
+                  <User className="h-6 w-6" />
+                  <span className="text-xs">Perfil</span>
+                </Button>
+                <Button variant="outline" onClick={searchInMeeting} className="flex-col h-24 space-y-2">
+                  <Search className="h-6 w-6" />
+                  <span className="text-xs">Buscar</span>
+                </Button>
+                <Button variant="outline" onClick={exportMeeting} className="flex-col h-24 space-y-2">
+                  <Download className="h-6 w-6" />
+                  <span className="text-xs">Exportar</span>
+                </Button>
+                <Button variant="outline" onClick={duplicateMeeting} className="flex-col h-24 space-y-2">
+                  <Copy className="h-6 w-6" />
+                  <span className="text-xs">Duplicar</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Participants */}
+          <Card>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <User className="h-5 w-5 text-blue-600" />
+                Participantes
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowParticipantsDialog(true)}>
+                <UserPlus className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {participants.map((participant, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback>{participant.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{participant.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{participant.email}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Información de usuario</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
-                      <p className="text-sm text-gray-600">Email: {session.user?.email}</p>
-                      <p className="text-sm text-gray-600">Estado: Activo</p>
-                      <p className="text-sm text-gray-600">Rol: Participante</p>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span className="flex items-center gap-1">
-                    <User className="h-4 w-4 text-blue-600" />
-                    Asistente de Sprint
-                  </span>
-                </div>
-                <Drawer>
-                  <DrawerTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DrawerTrigger>
-                  <DrawerContent>
-                    <DrawerHeader>
-                      <DrawerTitle>Sobre el Asistente</DrawerTitle>
-                    </DrawerHeader>
-                    <div className="p-4">
-                      <p className="text-sm text-gray-600 mb-2">
-                        El Asistente de Sprint es un agente AI diseñado para facilitar las reuniones 
-                        de sprint, tomar notas, y ayudar con la gestión del proyecto.
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Utiliza la voz o el chat para interactuar con el asistente y obtener ayuda.
-                      </p>
-                    </div>
-                  </DrawerContent>
-                </Drawer>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Button variant="outline" size="sm" className="w-full flex justify-center items-center gap-1">
-                <Users className="h-4 w-4" /> Invitar participantes
-              </Button>
-            </div>
-          </div>
-          
-          <div className="border rounded-lg p-4 shadow-sm bg-white">
-            <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-blue-600" />
-              Acciones Rápidas
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex flex-col items-center py-3 h-auto"
-                onClick={handleViewProfile}
-              >
-                <User className="h-5 w-5 mb-1" />
-                <span className="text-xs">Perfil</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex flex-col items-center py-3 h-auto"
-                onClick={handleSearch}
-              >
-                <Search className="h-5 w-5 mb-1" />
-                <span className="text-xs">Buscar</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex flex-col items-center py-3 h-auto"
-                onClick={handleExport}
-              >
-                <Download className="h-5 w-5 mb-1" />
-                <span className="text-xs">Exportar</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex flex-col items-center py-3 h-auto"
-                onClick={handleDuplicate}
-              >
-                <Copy className="h-5 w-5 mb-1" />
-                <span className="text-xs">Duplicar</span>
-              </Button>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Search Modal */}
-      <Dialog open={showSearchModal} onOpenChange={setShowSearchModal}>
-        <DialogContent className="sm:max-w-[425px]">
+      {/* Invite Participants Dialog */}
+      <Dialog open={showParticipantsDialog} onOpenChange={setShowParticipantsDialog}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Search className="h-5 w-5" /> Buscar en reuniones
-            </DialogTitle>
+            <DialogTitle>Invitar Participantes</DialogTitle>
+            <DialogDescription>
+              Ingresa el correo electrónico de la persona que deseas invitar a esta reunión.
+            </DialogDescription>
           </DialogHeader>
-          <Command>
-            <CommandInput placeholder="Buscar reuniones o mensajes..." />
-            <CommandList>
-              <CommandEmpty>No se encontraron resultados.</CommandEmpty>
-              <CommandGroup heading="Reuniones recientes">
-                <CommandItem onSelect={() => {
-                  toast.info("Navegando a reunión...");
-                  setShowSearchModal(false);
-                }}>
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  <span>Sprint Planning - Mayo 2025</span>
-                </CommandItem>
-                <CommandItem onSelect={() => {
-                  toast.info("Navegando a reunión...");
-                  setShowSearchModal(false);
-                }}>
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  <span>Daily Standup - Mayo 2025</span>
-                </CommandItem>
-              </CommandGroup>
-              <CommandGroup heading="Mensajes">
-                <CommandItem onSelect={() => {
-                  setSearchTerm("objetivos");
-                  setShowSearchModal(false);
-                }}>
-                  <Search className="mr-2 h-4 w-4" />
-                  <span>Buscar "objetivos"</span>
-                </CommandItem>
-                <CommandItem onSelect={() => {
-                  setSearchTerm("tareas");
-                  setShowSearchModal(false);
-                }}>
-                  <Search className="mr-2 h-4 w-4" />
-                  <span>Buscar "tareas"</span>
-                </CommandItem>
-              </CommandGroup>
-            </CommandList>
-          </Command>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Correo electrónico</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="ejemplo@correo.com"
+                value={newParticipant}
+                onChange={(e) => setNewParticipant(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button onClick={inviteParticipant} disabled={!newParticipant.trim()}>Invitar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Profile Dialog */}
+      <Dialog open={showUserProfileDialog} onOpenChange={setShowUserProfileDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Perfil de Usuario</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col items-center space-y-4">
+              <Avatar className="h-24 w-24">
+                <AvatarFallback>{session.user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
+              </Avatar>
+              <h3 className="text-lg font-semibold">{userProfile?.full_name || session.user?.email}</h3>
+              <p className="text-gray-500">{session.user?.email}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <Label className="text-xs text-gray-500">Nombre de Usuario</Label>
+                <p>{userProfile?.username || 'No definido'}</p>
+              </div>
+              <div>
+                <Label className="text-xs text-gray-500">Cuenta Creada</Label>
+                <p>{userProfile ? new Date(userProfile.created_at).toLocaleDateString() : 'No disponible'}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button>Cerrar</Button>
+            </DialogClose>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
