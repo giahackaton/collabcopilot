@@ -59,7 +59,7 @@ const AuthPage = () => {
 
   // Pre-fill the test user credentials
   const fillTestUser = () => {
-    form.setValue('email', 'usuario1@copilot.com');
+    form.setValue('email', 'prueba@copilot.com');
     form.setValue('password', '123456');
   };
 
