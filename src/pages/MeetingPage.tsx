@@ -54,14 +54,12 @@ const MeetingPage = () => {
   useEffect(() => {
     if (session.user) {
       fetchParticipants();
-      fetchMessages();
     }
   }, [session.user]);
 
   const fetchParticipants = async () => {
     try {
       // In a real application, you would fetch this from your database
-      // For now we'll use local data but structured for future API integration
       const currentUser = {
         email: session.user?.email || 'usuario.actual@ejemplo.com',
         name: userProfile?.full_name || session.user?.email?.split('@')[0] || 'Usuario Actual',
@@ -72,16 +70,6 @@ const MeetingPage = () => {
     } catch (error) {
       console.error('Error fetching participants:', error);
       toast.error('No se pudieron cargar los participantes');
-    }
-  };
-
-  const fetchMessages = async () => {
-    try {
-      // Real implementation would fetch messages from the database
-      setMessages([]);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-      toast.error('No se pudieron cargar los mensajes');
     }
   };
 
@@ -115,7 +103,6 @@ const MeetingPage = () => {
     }, 1000);
     
     setMessage('');
-    toast.success('Mensaje enviado');
   };
 
   const toggleRecording = () => {

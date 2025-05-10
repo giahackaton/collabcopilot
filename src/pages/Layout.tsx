@@ -27,6 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
+import Sidebar from '@/components/ui/sidebar';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { session, signOut } = useAuth();
@@ -58,7 +59,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         onClick={closeMenu}
       >
         <Icon className="h-4 w-4" />
-        {text}
+        <span className="truncate">{text}</span>
       </Link>
     );
   };
@@ -66,68 +67,70 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block w-64 bg-white shadow-md">
-        <div className="p-4 border-b">
-          <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
-            <Layers className="h-5 w-5" />
-            CollabCopilot1.0
-          </h1>
-        </div>
+      <div className="hidden md:block">
+        <Sidebar>
+          <div className="mb-6">
+            <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
+              <Layers className="h-5 w-5" />
+              <span className="truncate">CollabCopilot1.0</span>
+            </h1>
+          </div>
 
-        <div className="p-4">
-          {session.user && (
-            <div className="mb-6 p-3 bg-blue-50 rounded-lg flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback>{session.user.email?.[0].toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{session.user.email}</p>
-                <p className="text-xs text-gray-500">Sesión activa</p>
+          <div>
+            {session.user && (
+              <div className="mb-6 p-3 bg-blue-50 rounded-lg flex items-center gap-3">
+                <Avatar className="h-10 w-10 shrink-0">
+                  <AvatarFallback>{session.user.email?.[0].toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{session.user.email}</p>
+                  <p className="text-xs text-gray-500 truncate">Sesión activa</p>
+                </div>
               </div>
-            </div>
-          )}
-          
-          <nav>
-            <ul className="space-y-1">
-              {session.user ? (
-                <>
+            )}
+            
+            <nav>
+              <ul className="space-y-1">
+                {session.user ? (
+                  <>
+                    <li>
+                      {renderLinkItem('/', Home, 'Dashboard')}
+                    </li>
+                    <li>
+                      {renderLinkItem('/meeting', MessageSquare, 'Reunión Activa')}
+                    </li>
+                    <li>
+                      {renderLinkItem('/summaries', FileText, 'Resúmenes')}
+                    </li>
+                    <li>
+                      {renderLinkItem('/logbook', Book, 'Bitácora')}
+                    </li>
+                    <li>
+                      {renderLinkItem('/tasks', CheckSquare, 'Tareas Asignadas')}
+                    </li>
+                    <li>
+                      {renderLinkItem('/decisions', Search, 'Buscar Decisiones')}
+                    </li>
+                    <li className="pt-4 mt-4 border-t">
+                      <button 
+                        onClick={handleSignOut}
+                        className="w-full text-left flex items-center gap-2 p-2 rounded hover:bg-red-100 text-red-600"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="truncate">Cerrar Sesión</span>
+                      </button>
+                    </li>
+                  </>
+                ) : (
                   <li>
-                    {renderLinkItem('/', Home, 'Dashboard')}
+                    {renderLinkItem('/auth', LogIn, 'Iniciar Sesión')}
                   </li>
-                  <li>
-                    {renderLinkItem('/meeting', MessageSquare, 'Reunión Activa')}
-                  </li>
-                  <li>
-                    {renderLinkItem('/summaries', FileText, 'Resúmenes')}
-                  </li>
-                  <li>
-                    {renderLinkItem('/logbook', Book, 'Bitácora')}
-                  </li>
-                  <li>
-                    {renderLinkItem('/tasks', CheckSquare, 'Tareas Asignadas')}
-                  </li>
-                  <li>
-                    {renderLinkItem('/decisions', Search, 'Buscar Decisiones')}
-                  </li>
-                  <li className="pt-4 mt-4 border-t">
-                    <button 
-                      onClick={handleSignOut}
-                      className="w-full text-left flex items-center gap-2 p-2 rounded hover:bg-red-100 text-red-600"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Cerrar Sesión
-                    </button>
-                  </li>
-                </>
-              ) : (
-                <li>
-                  {renderLinkItem('/auth', LogIn, 'Iniciar Sesión')}
-                </li>
-              )}
-            </ul>
-          </nav>
-        </div>
-      </aside>
+                )}
+              </ul>
+            </nav>
+          </div>
+        </Sidebar>
+      </div>
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white shadow-md">

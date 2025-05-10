@@ -6,10 +6,11 @@ import SidebarToggle from "@/components/ui/sidebar-toggle";
 interface SidebarProps {
   children: React.ReactNode;
   className?: string;
+  defaultCollapsed?: boolean;
 }
 
-const Sidebar = ({ children, className = "" }: SidebarProps) => {
-  const [collapsed, setCollapsed] = useState(false);
+const Sidebar = ({ children, className = "", defaultCollapsed = false }: SidebarProps) => {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
