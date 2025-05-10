@@ -14,11 +14,11 @@ const Dashboard = () => {
     try {
       // Primero crear el usuario a través de la autenticación
       const { data, error } = await supabase.auth.signUp({
-        email: 'usuario1@copilot.com',
+        email: 'prueba@copilot.com',
         password: '123456',
         options: {
           data: {
-            username: 'usuario1',
+            username: 'usuarioprueba',
             full_name: 'Usuario de Prueba',
           }
         }
@@ -32,7 +32,7 @@ const Dashboard = () => {
           const { error: profileError } = await supabase
             .from('profiles')
             .update({ 
-              email: 'usuario1@copilot.com',
+              email: 'prueba@copilot.com',
               password: '123456' // Nota: Esto es solo para fines de prueba
             })
             .eq('id', data.user.id);
@@ -41,7 +41,7 @@ const Dashboard = () => {
             console.error("Error al actualizar perfil:", profileError);
             toast.error(`Error al actualizar perfil: ${profileError.message}`);
           } else {
-            toast.success('Usuario de prueba creado correctamente. Ya puedes iniciar sesión con: usuario1@copilot.com y contraseña: 123456');
+            toast.success('Usuario de prueba creado correctamente. Ya puedes iniciar sesión con: prueba@copilot.com y contraseña: 123456');
           }
         }
       }
