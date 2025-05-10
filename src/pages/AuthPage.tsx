@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ type FormValues = {
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp, error, session } = useAuth();
   const navigate = useNavigate();
   const form = useForm<FormValues>({
@@ -25,6 +26,13 @@ const AuthPage = () => {
     },
   });
 
+  // Mostrar errores de autenticación como toasts
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
   // If user is already logged in, redirect to home
   React.useEffect(() => {
     if (session.user && !session.isLoading) {
@@ -33,6 +41,7 @@ const AuthPage = () => {
   }, [session, navigate]);
 
   const onSubmit = async (data: FormValues) => {
+    setIsLoading(true);
     try {
       if (isLogin) {
         await signIn(data.email, data.password);
@@ -43,7 +52,15 @@ const AuthPage = () => {
       }
     } catch (err) {
       console.error("Authentication error:", err);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // Pre-fill the test user credentials
+  const fillTestUser = () => {
+    form.setValue('email', 'usuario1@copilot.com');
+    form.setValue('password', '123456');
   };
 
   return (
@@ -99,12 +116,17 @@ const AuthPage = () => {
                   )}
                 />
 
-                {error && (
-                  <div className="text-sm text-red-500 mt-2">{error}</div>
-                )}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full mb-2"
+                  onClick={fillTestUser}
+                >
+                  Usar cuenta de prueba
+                </Button>
 
-                <Button type="submit" className="w-full" disabled={session.isLoading}>
-                  {isLogin ? 'Iniciar Sesión' : 'Registrarse'}
+                <Button type="submit" className="w-full" disabled={isLoading || session.isLoading}>
+                  {isLoading ? 'Procesando...' : isLogin ? 'Iniciar Sesión' : 'Registrarse'}
                 </Button>
               </form>
             </Form>
