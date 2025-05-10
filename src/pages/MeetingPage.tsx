@@ -5,6 +5,22 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/context/AuthContext';
 import { Message } from '@/types/meeting';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Send, MessageSquare, User, Users, Copy, Download, Mic, MoreHorizontal, Search } from "lucide-react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
+import { 
+  Drawer, 
+  DrawerContent, 
+  DrawerHeader, 
+  DrawerTitle,
+  DrawerTrigger 
+} from "@/components/ui/drawer";
+import { toast } from "sonner";
 
 // ElevenLabs Voice Agent Component
 const VoiceAgent = ({ onMessage }: { onMessage: (content: string, isAI?: boolean) => void }) => {
@@ -66,7 +82,10 @@ const VoiceAgent = ({ onMessage }: { onMessage: (content: string, isAI?: boolean
   
   return (
     <div className="border rounded-lg p-4 shadow-sm bg-white mb-6">
-      <h3 className="text-lg font-medium mb-3">Asistente de Voz</h3>
+      <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+        <Mic className="h-5 w-5 text-blue-600" />
+        Asistente de Voz
+      </h3>
       <div ref={widgetContainerRef} className="elevenlabs-convai-widget">
         {/* Aquí se montará dinámicamente el widget de ElevenLabs */}
       </div>
@@ -79,6 +98,7 @@ const MeetingPage = () => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Auto-scroll to the bottom when messages change
   useEffect(() => {
@@ -113,10 +133,47 @@ const MeetingPage = () => {
     setMessages(prevMessages => [...prevMessages, newMessage]);
   };
 
+  const handleCopyMessages = () => {
+    const messagesText = messages.map(msg => 
+      `${msg.sender} (${new Date(msg.timestamp).toLocaleString()}): ${msg.content}`
+    ).join('\n\n');
+    
+    navigator.clipboard.writeText(messagesText)
+      .then(() => toast.success("Mensajes copiados al portapapeles"))
+      .catch(err => toast.error("Error al copiar: " + err));
+  };
+
+  const handleDownloadChat = () => {
+    const messagesText = messages.map(msg => 
+      `${msg.sender} (${new Date(msg.timestamp).toLocaleString()}): ${msg.content}`
+    ).join('\n\n');
+    
+    const blob = new Blob([messagesText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reunion-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Chat descargado correctamente");
+  };
+  
+  const filteredMessages = searchTerm 
+    ? messages.filter(msg => 
+        msg.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        msg.sender.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : messages;
+
   return (
     <div className="h-[calc(100vh-6rem)] flex flex-col">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Reunión Activa</h1>
+        <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+          <MessageSquare className="h-8 w-8 text-blue-600" /> 
+          Reunión Activa
+        </h1>
         <p className="text-gray-500 mt-1">
           Participa en la reunión activa con el asistente
         </p>
@@ -125,14 +182,46 @@ const MeetingPage = () => {
       <div className="flex flex-1 gap-6">
         {/* Main chat area */}
         <div className="flex-1 flex flex-col">
+          {/* Chat toolbar */}
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleCopyMessages} 
+                className="flex items-center gap-1"
+              >
+                <Copy className="h-4 w-4" /> Copiar
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDownloadChat}
+                className="flex items-center gap-1"
+              >
+                <Download className="h-4 w-4" /> Descargar
+              </Button>
+            </div>
+            <div className="relative w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Buscar en el chat..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
+        
           <ScrollArea className="flex-1 border rounded-lg p-4 bg-white mb-4 h-[60vh]">
-            {messages.length === 0 ? (
+            {filteredMessages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                <MessageSquare className="h-12 w-12 mb-2 opacity-30" />
                 <p>No hay mensajes aún. Inicia la conversación.</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {messages.map((msg) => (
+                {filteredMessages.map((msg) => (
                   <div 
                     key={msg.id} 
                     className={`flex ${
@@ -146,8 +235,18 @@ const MeetingPage = () => {
                           : 'bg-blue-500 text-white'
                       }`}
                     >
-                      <div className="font-medium text-sm mb-1">
-                        {msg.sender}
+                      <div className="font-medium text-sm mb-1 flex items-center gap-1">
+                        {msg.isAI ? (
+                          <>
+                            <User className="h-3 w-3" />
+                            {msg.sender}
+                          </>
+                        ) : (
+                          <>
+                            {msg.sender}
+                            <User className="h-3 w-3" />
+                          </>
+                        )}
                       </div>
                       <p>{msg.content}</p>
                       <div className="text-xs opacity-70 text-right mt-1">
@@ -168,7 +267,9 @@ const MeetingPage = () => {
               placeholder="Escribe un mensaje..."
               className="flex-1"
             />
-            <Button type="submit">Enviar</Button>
+            <Button type="submit" className="flex items-center gap-1">
+              <Send className="h-4 w-4" /> Enviar
+            </Button>
           </form>
         </div>
 
@@ -176,17 +277,98 @@ const MeetingPage = () => {
         <div className="w-80">
           <VoiceAgent onMessage={handleVoiceAgentMessage} />
           
+          <div className="border rounded-lg p-4 shadow-sm bg-white mb-6">
+            <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+              <Users className="h-5 w-5 text-blue-600" />
+              Participantes
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="flex items-center gap-1">
+                    <User className="h-4 w-4 text-gray-600" />
+                    {session.user?.email || 'Usuario'} (Tú)
+                  </span>
+                </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Información de usuario</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                      <p className="text-sm text-gray-600">Email: {session.user?.email}</p>
+                      <p className="text-sm text-gray-600">Estado: Activo</p>
+                      <p className="text-sm text-gray-600">Rol: Participante</p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="flex items-center gap-1">
+                    <User className="h-4 w-4 text-blue-600" />
+                    Asistente de Sprint
+                  </span>
+                </div>
+                <Drawer>
+                  <DrawerTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DrawerTrigger>
+                  <DrawerContent>
+                    <DrawerHeader>
+                      <DrawerTitle>Sobre el Asistente</DrawerTitle>
+                    </DrawerHeader>
+                    <div className="p-4">
+                      <p className="text-sm text-gray-600 mb-2">
+                        El Asistente de Sprint es un agente AI diseñado para facilitar las reuniones 
+                        de sprint, tomar notas, y ayudar con la gestión del proyecto.
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Utiliza la voz o el chat para interactuar con el asistente y obtener ayuda.
+                      </p>
+                    </div>
+                  </DrawerContent>
+                </Drawer>
+              </div>
+            </div>
+            <div className="mt-4">
+              <Button variant="outline" size="sm" className="w-full flex justify-center items-center gap-1">
+                <Users className="h-4 w-4" /> Invitar participantes
+              </Button>
+            </div>
+          </div>
+          
           <div className="border rounded-lg p-4 shadow-sm bg-white">
-            <h3 className="text-lg font-medium mb-3">Participantes</h3>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span>{session.user?.email || 'Usuario'} (Tú)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span>Asistente de Sprint</span>
-              </div>
+            <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-blue-600" />
+              Acciones Rápidas
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" className="flex flex-col items-center py-3 h-auto">
+                <User className="h-5 w-5 mb-1" />
+                <span className="text-xs">Perfil</span>
+              </Button>
+              <Button variant="outline" size="sm" className="flex flex-col items-center py-3 h-auto">
+                <Search className="h-5 w-5 mb-1" />
+                <span className="text-xs">Buscar</span>
+              </Button>
+              <Button variant="outline" size="sm" className="flex flex-col items-center py-3 h-auto">
+                <Download className="h-5 w-5 mb-1" />
+                <span className="text-xs">Exportar</span>
+              </Button>
+              <Button variant="outline" size="sm" className="flex flex-col items-center py-3 h-auto">
+                <Copy className="h-5 w-5 mb-1" />
+                <span className="text-xs">Duplicar</span>
+              </Button>
             </div>
           </div>
         </div>
