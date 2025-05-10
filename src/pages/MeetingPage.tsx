@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Message } from '@/types/meeting';
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 // ElevenLabs Voice Agent Component
-const VoiceAgent = ({ onMessage }: { onMessage: (content: string) => void }) => {
+const VoiceAgent = ({ onMessage }: { onMessage: (content: string, isAI?: boolean) => void }) => {
   // Referencia al contenedor donde se montará el widget
   const widgetContainerRef = useRef<HTMLDivElement>(null);
   
