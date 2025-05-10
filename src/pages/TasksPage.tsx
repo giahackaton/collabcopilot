@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { 
   CheckSquare, Search, AlertTriangle, Clock, CheckCircle, User, Calendar, 
-  Info, Plus, Trash2, Edit, Loader2, X, Save, Filter
+  Info, Plus, Trash2, Edit, Loader2, X, Save, Filter, AlertCircle
 } from 'lucide-react';
 import {
   Dialog,
