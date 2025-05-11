@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 const AssistantWidget: React.FC = () => {
   useEffect(() => {
@@ -16,13 +16,10 @@ const AssistantWidget: React.FC = () => {
   }, []);
 
   return (
-    <Card>
-      <CardContent>
-        <div className="bg-blue-50 p-4 rounded-md text-center">
+    <Card className="border-blue-100 shadow-sm">
+      <CardContent className="p-2">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-md">
           <elevenlabs-convai agent-id="qpL7DFiOttmlnC5ESiBo"></elevenlabs-convai>
-          <p className="text-xs text-gray-500 mt-2">
-            El asistente transcribirá y analizará la conversación
-          </p>
         </div>
       </CardContent>
     </Card>
