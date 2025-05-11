@@ -1,7 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
-import { Mic } from 'lucide-react';
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 const AssistantWidget: React.FC = () => {
   useEffect(() => {
@@ -18,12 +17,6 @@ const AssistantWidget: React.FC = () => {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Mic className="h-5 w-5 text-blue-600" />
-          <span>Widget de Asistente</span>
-        </CardTitle>
-      </CardHeader>
       <CardContent>
         <div className="bg-blue-50 p-4 rounded-md text-center">
           <elevenlabs-convai agent-id="qpL7DFiOttmlnC5ESiBo"></elevenlabs-convai>
