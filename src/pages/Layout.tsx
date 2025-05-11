@@ -15,12 +15,18 @@ import {
   UserRound
 } from 'lucide-react';
 import UserProfileDialog from '@/components/UserProfileDialog';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { session, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileData, setProfileData] = useState<{
+    username?: string;
+    full_name?: string;
+    avatar_url?: string;
+  }>({});
   
   const handleSignOut = () => {
     signOut();
@@ -37,6 +43,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             CollabCopilot1.0
           </h1>
         </div>
+
+        {/* User profile section at top of sidebar */}
+        {session.user && (
+          <div className="p-4 border-b flex items-center space-x-3">
+            <Avatar className="h-10 w-10">
+              {profileData.avatar_url ? (
+                <AvatarImage src={profileData.avatar_url} />
+              ) : (
+                <AvatarFallback>
+                  {session.user.email?.[0]?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {profileData.full_name || profileData.username || session.user.email?.split('@')[0]}
+              </p>
+              <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
+            </div>
+          </div>
+        )}
 
         <nav className="p-4">
           <ul className="space-y-2">
@@ -137,6 +164,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <UserProfileDialog 
         open={isProfileOpen} 
         onOpenChange={setIsProfileOpen}
+        onProfileUpdated={() => {
+          // We could fetch updated profile data here if needed
+        }}
       />
     </div>
   );
