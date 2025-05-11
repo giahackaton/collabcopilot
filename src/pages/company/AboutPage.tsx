@@ -9,19 +9,19 @@ const AboutPage = () => {
       name: "Anthony George Yncahuaman Gomez",
       position: "Fundador & Desarrollador",
       bio: "Líder del equipo PromptHunters con experiencia en desarrollo web y aplicaciones basadas en IA. Especializado en crear soluciones innovadoras.",
-      image: "/team-member-1.jpg" // Placeholder - you'll replace with uploaded image
+      image: "/lovable-uploads/261dd8c6-63b0-4842-98e1-7545cbcc726a.png" 
     },
     {
       name: "Johanna Barragan Arteaga",
       position: "Fundador & Desarrollador",
       bio: "Responsable del diseño backend, Base de datos y Servicio de Automatizacion en PromptHunters. Especialista en Soluciones y aplicaciones IA.",
-      image: "/team-member-2.jpg" // Placeholder - you'll replace with uploaded image
+      image: "/lovable-uploads/18f66781-835a-4132-988c-a2b2e2e3d6a7.png"
     },
     {
       name: "Edwin Calvo Rincon",
       position: "Ingeniero Full Stack",
       bio: "Especialista en Soluciones con Agentes conversacionales con experiencia en desarrollo web y aplicaciones basadas en IA. Especializado en crear soluciones innovadoras.",
-      image: "/team-member-3.jpg" // Placeholder - you'll replace with uploaded image
+      image: "/lovable-uploads/dfc07b1b-6197-4917-a8f1-690ad6226e36.png"
     }
   ];
 
@@ -38,7 +38,7 @@ const AboutPage = () => {
             <div>
               <p className="text-lg mb-4">
                 PromptHunters nació en el hackaton de Inteligencia Artificial  AI-Hackathon.co, la hackathon más increíble de LATAM.
-1.000 Builders. 10 días. Una sola meta: crear cosas absurdamente útiles con inteligencia artificial..
+1.000 Builders. 10 días. Una sola meta: crear cosas absurdamente útiles con inteligencia artificial.
               </p>
               <p className="text-lg mb-4">
                 Nuestro equipo identificó la necesidad de herramientas que aprovechen el poder de la IA para mejorar la colaboración y la productividad en equipos distribuidos.
@@ -47,11 +47,11 @@ const AboutPage = () => {
                 Estamos comprometidos con crear soluciones que no solo capturan información valiosa, sino que también proporcionan estructura, análisis y seguimiento para transformar ideas en acciones concretas.
               </p>
             </div>
-            <div className="rounded-lg overflow-hidden h-80">
+            <div className="rounded-lg overflow-hidden h-80 flex items-center justify-center bg-gray-100 p-4">
               <img 
-                src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" 
-                alt="El equipo de PromptHunters" 
-                className="w-full h-full object-cover"
+                src="/lovable-uploads/13a53363-7e73-4d5c-acf0-1662f401864b.png" 
+                alt="Logo PromptHunters" 
+                className="max-h-64 max-w-full object-contain"
               />
             </div>
           </div>

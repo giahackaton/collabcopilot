@@ -45,8 +45,15 @@ const PageTemplate: React.FC<PageTemplateProps> = ({
       
       {/* Firma del equipo PromptHunters */}
       <footer className="py-6 bg-gray-50">
-        <div className="text-center text-sm text-gray-500">
-          <p className="font-medium">Proyecto creado por el equipo PromptHunters</p>
+        <div className="text-center text-sm">
+          <p className="font-medium text-gray-700">Realizado por PromptHunters</p>
+          <div className="mt-2 flex justify-center">
+            <img 
+              src="/lovable-uploads/13a53363-7e73-4d5c-acf0-1662f401864b.png" 
+              alt="Logo PromptHunters" 
+              className="h-8" 
+            />
+          </div>
         </div>
       </footer>
     </div>
