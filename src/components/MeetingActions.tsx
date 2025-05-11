@@ -164,7 +164,7 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({
             <DialogTitle>Finalizar Reunión</DialogTitle>
             <DialogDescription>
               {useScriptSummary 
-                ? "Se generará un resumen usando el guión predefinido. Confirma o modifica el título."
+                ? "Se generará un resumen automáticamente. Por favor, confirma el título de la reunión."
                 : "Al finalizar la reunión se generará un resumen automáticamente. Por favor, confirma el título de la reunión."}
             </DialogDescription>
           </DialogHeader>
@@ -179,20 +179,9 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({
               />
             </div>
             
-            {useScriptSummary && (
-              <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
-                <p className="text-sm text-blue-700 font-medium">Resumen desde guión</p>
-                <p className="text-sm text-blue-600">
-                  Se utilizará el resumen predefinido del guión "{scriptService.getActiveScriptTitle()}" para generar el documento.
-                </p>
-              </div>
-            )}
-            
-            {!useScriptSummary && (
-              <p className="text-sm text-gray-500">
-                Se generará un resumen de la conversación utilizando IA. Este proceso puede tardar unos segundos.
-              </p>
-            )}
+            <p className="text-sm text-gray-500">
+              Se generará un resumen de la conversación utilizando IA. Este proceso puede tardar unos segundos.
+            </p>
             
             {summaryError && (
               <div className="bg-red-50 p-3 rounded-md border border-red-200">
