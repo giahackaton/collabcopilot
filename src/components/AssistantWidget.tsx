@@ -14,7 +14,10 @@ const AssistantWidget: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="bg-blue-50 p-4 rounded-md text-center">
-          <elevenlabs-convai agent-id="qpL7DFiOttmlnC5ESiBo"></elevenlabs-convai>
+          {/* Using a div instead of the custom element to avoid potential issues */}
+          <div id="elevenlabs-widget" className="min-h-[150px]">
+            {/* ElevenLabs widget will be initialized here using JavaScript */}
+          </div>
           <p className="text-xs text-gray-500 mt-2">
             El asistente transcribirá y analizará la conversación
           </p>
