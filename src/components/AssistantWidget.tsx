@@ -22,14 +22,14 @@ const AssistantWidget: React.FC = () => {
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-md flex flex-col items-center">
           <div className="flex items-center justify-center mb-2 text-blue-500">
             <Bot size={20} className="mr-2" />
-            <span className="text-sm font-medium">AI Assistant</span>
+            <span className="text-sm font-medium">Asistente IA</span>
           </div>
           
           <div className="text-center text-sm text-gray-600 mb-3">
-            <p>This bot is working in the chat to track your meeting.</p>
+            <p>Este bot está trabajando en el chat para seguir tu reunión.</p>
             <div className="flex items-center justify-center mt-2 text-blue-600">
               <PhoneCall size={16} className="mr-1" /> 
-              <span className="font-medium">For voice interactions, use GIA below</span>
+              <span className="font-medium">Para interacciones por voz, usa GIA debajo</span>
             </div>
           </div>
           
