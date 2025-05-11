@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -187,12 +186,16 @@ const MeetingPage = () => {
         name: newParticipant.split('@')[0] || 'Invitado',
       };
       
+      // Get the current app URL
+      const appUrl = window.location.origin;
+      
       // Send invitation email using edge function
       const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: {
           email: newParticipant,
           sender: session.user?.email,
-          meetingTitle: meetingName
+          meetingTitle: meetingName,
+          appUrl: appUrl // Passing the current app URL
         }
       });
       

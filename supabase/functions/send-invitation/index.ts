@@ -11,6 +11,7 @@ interface InvitationRequest {
   email: string;
   sender: string;
   meetingTitle: string;
+  appUrl?: string; // URL base de la aplicación
 }
 
 serve(async (req) => {
@@ -20,7 +21,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email, sender, meetingTitle }: InvitationRequest = await req.json();
+    const { email, sender, meetingTitle, appUrl = '' }: InvitationRequest = await req.json();
 
     // Validate required fields
     if (!email || !sender) {
@@ -58,8 +59,12 @@ serve(async (req) => {
     // Initialize Resend client
     const resend = new Resend(resendApiKey);
     
-    // Generate a unique join link (in a real app, this would include a token)
-    const joinLink = `https://meeting-ai.app/join?meeting=${encodeURIComponent(meetingTitle)}&inviter=${encodeURIComponent(sender)}`;
+    // Use the actual app URL if provided, or fallback to a default relative path
+    // This ensures the invitation links to the current application instance
+    const baseUrl = appUrl || window.location.origin;
+    const joinLink = `${baseUrl}/meeting?meeting=${encodeURIComponent(meetingTitle)}&inviter=${encodeURIComponent(sender)}`;
+    
+    console.log(`Generated join link: ${joinLink} using base URL: ${baseUrl}`);
     
     // Send actual email using Resend
     const { data, error: resendError } = await resend.emails.send({
