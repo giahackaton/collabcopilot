@@ -2,13 +2,14 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, UserPlus, Wifi, WifiOff, Laptop } from 'lucide-react';
+import { MessageSquare, UserPlus, Wifi, WifiOff } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import ScriptSelector from './ScriptSelector';
 import { type Message } from '@/context/MeetingContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { socketService } from '@/services/socketService';
 
 interface ChatSectionProps {
   messages: Message[];
@@ -30,6 +31,9 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   onScriptActivate = () => {}
 }) => {
   const isMobile = useIsMobile();
+  
+  // Debug connection info
+  const connectionInfo = socketService.getDebugInfo?.() || { socketId: 'none' };
 
   return (
     <Card className="flex-1 overflow-hidden">
@@ -44,6 +48,9 @@ const ChatSection: React.FC<ChatSectionProps> = ({
                 <><WifiOff className="h-3 w-3 mr-1" /> <span className="text-xs">{isMobile ? '' : 'Desconectado'}</span></>
               }
             </Badge>
+            {!isMobile && connectionInfo.socketId && (
+              <span className="text-xs text-gray-400 ml-2">Socket: {connectionInfo.socketId.substring(0, 6)}...</span>
+            )}
           </div>
           <div className="flex gap-2 items-center mt-1 sm:mt-0">
             <div className="opacity-50 hover:opacity-100 transition-opacity">

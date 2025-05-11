@@ -19,7 +19,10 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
 
   // Log messages for debugging
   useEffect(() => {
-    console.log("MessageList - Mensajes actuales:", messages);
+    console.log("MessageList - Mensajes actuales:", messages.length);
+    messages.forEach((msg, i) => {
+      console.log(`Mensaje ${i+1}: ID=${msg.id}, Sender=${msg.sender}, Content=${msg.content.substring(0, 20)}...`);
+    });
   }, [messages]);
 
   // Group consecutive messages from the same sender
@@ -40,7 +43,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   return (
     <div className="flex-1 h-[350px] sm:h-[400px] overflow-y-auto p-2 sm:p-4 space-y-4">
       {groupedMessages.map((group, groupIndex) => (
-        <div key={groupIndex} className={`flex ${group.messages[0].isAI ? 'justify-start' : 'justify-end'}`}>
+        <div key={`group-${groupIndex}-${group.messages[0].id}`} className={`flex ${group.messages[0].isAI ? 'justify-start' : 'justify-end'}`}>
           <div className={`max-w-[85%] sm:max-w-[80%] ${group.messages[0].isAI ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'} rounded-lg p-2 sm:p-3 shadow-sm`}>
             <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
               <Avatar className="h-5 w-5 sm:h-6 sm:w-6">
@@ -51,7 +54,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
             </div>
             
             {group.messages.map((msg, msgIndex) => (
-              <div key={msg.id} className={msgIndex > 0 ? "mt-2 pt-2 border-t border-gray-200" : ""}>
+              <div key={`msg-${msg.id}-${msgIndex}`} className={msgIndex > 0 ? "mt-2 pt-2 border-t border-gray-200" : ""}>
                 <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">{msg.content}</p>
               </div>
             ))}

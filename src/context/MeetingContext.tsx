@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
@@ -124,7 +125,7 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       
       // Verificar que el mensaje sea para esta reunión o no tenga meeting_id
       if (message.meeting_id && message.meeting_id !== meetingState.meetingId) {
-        console.log('Mensaje descartado, no corresponde a esta reunión');
+        console.log('Mensaje descartado, no corresponde a esta reunión:', message.meeting_id, 'vs', meetingState.meetingId);
         return;
       }
       
@@ -140,6 +141,10 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         ...prev,
         messages: [...prev.messages, message]
       }));
+      
+      // Log message details to help debug
+      console.log('Estado actual de mensajes:', meetingState.messages.length);
+      console.log('Mensaje añadido con ID:', message.id);
     });
 
     return unsubscribe;
@@ -153,6 +158,7 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         
         // Verificar que el participante sea para esta reunión
         if (data.meetingId !== meetingState.meetingId) {
+          console.log('Participante descartado, reunión diferente:', data.meetingId, 'vs', meetingState.meetingId);
           return;
         }
         
@@ -199,6 +205,8 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       meetingId: meetingId,
       startTime: active ? (prev.startTime || new Date()) : prev.startTime
     }));
+    
+    console.log(`Meeting set to ${active ? 'active' : 'inactive'} with ID: ${meetingId}`);
   };
 
   const setMeetingName = (name: string) => {
@@ -220,15 +228,25 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
     
+    // Generate UUID if not provided
+    const messageWithId = {
+      ...message,
+      id: message.id || uuidv4()
+    };
+    
     // Añadir mensaje al estado local inmediatamente para UI responsiva
     setMeetingState(prev => ({
       ...prev,
-      messages: [...prev.messages, message]
+      messages: [...prev.messages, messageWithId]
     }));
+    
+    // Log local update
+    console.log('Mensaje añadido localmente:', messageWithId);
+    console.log('Total mensajes ahora:', meetingState.messages.length + 1);
     
     // Preparar mensaje con ID de reunión
     const messageWithMeetingId = {
-      ...message,
+      ...messageWithId,
       meeting_id: meetingState.meetingId
     };
     
@@ -241,10 +259,23 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
       
+      // Log socket state
+      console.log('Estado de conexión:', socketService.getDebugInfo());
+      
       const success = socketService.sendMessage(messageWithMeetingId);
       
       if (!success) {
         toast.error('Error al enviar mensaje. Intentando reconectar...');
+        
+        // Force reconnection attempt
+        setTimeout(() => {
+          socketService.reconnect().then(connected => {
+            if (connected) {
+              // Retry sending message after reconnection
+              socketService.sendMessage(messageWithMeetingId);
+            }
+          });
+        }, 1000);
       } else {
         console.log('Mensaje enviado correctamente por Socket.IO');
       }
@@ -309,6 +340,7 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     setMeetingState(defaultMeetingState);
     sessionStorage.removeItem('meetingState');
+    console.log('Meeting state reset');
   };
 
   return (

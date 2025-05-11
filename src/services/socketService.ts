@@ -143,7 +143,7 @@ class SocketService {
   private connectionHandlers: ((status: boolean) => void)[] = [];
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private useLocalEmulator = false; // Cambiado a false para priorizar la conexión al servidor real
+  private useLocalEmulator = false; // Default to remote connection
   
   constructor() {
     this.localEmulator = new LocalEmulator();
@@ -176,7 +176,7 @@ class SocketService {
       this.userId = options.userId;
       this.userName = options.userName;
 
-      console.log(`Conectando socket para reunión: ${this.meetingId}`);
+      console.log(`Conectando socket para reunión: ${this.meetingId}, userId: ${this.userId}`);
       
       // Si estamos usando el emulador local, conectar directamente
       if (this.useLocalEmulator) {
@@ -219,9 +219,20 @@ class SocketService {
 
         // Manejar eventos de conexión
         this.socket.on('connect', () => {
-          console.log('Socket conectado exitosamente');
+          console.log('Socket conectado exitosamente:', this.socket?.id);
           this.reconnectAttempts = 0;
           this.notifyConnectionStatus(true);
+          
+          // Join the meeting room explicitly
+          if (this.socket && this.meetingId) {
+            this.socket.emit('join_meeting', {
+              meetingId: this.meetingId,
+              userId: this.userId,
+              userName: this.userName
+            });
+            console.log(`Emit join_meeting for: ${this.meetingId}`);
+          }
+          
           resolve(true);
         });
 
@@ -337,6 +348,12 @@ class SocketService {
       console.log('Mensaje recibido (evento message):', data);
       this.notifyMessageHandlers(data);
     });
+    
+    // Add specific handling for chat_message event (another common pattern)
+    this.socket.on('chat_message', (data) => {
+      console.log('Mensaje recibido (evento chat_message):', data);
+      this.notifyMessageHandlers(data);
+    });
 
     this.socket.on('new_participant', (data) => {
       console.log('Participante conectado:', data);
@@ -348,12 +365,28 @@ class SocketService {
       // También lo manejamos con los manejadores de participantes
       this.notifyParticipantHandlers(data);
     });
+    
+    // Listen for join_meeting_success to confirm room joining
+    this.socket.on('join_meeting_success', (data) => {
+      console.log('Successfully joined meeting room:', data);
+      toast.success(`Conectado a la sala de reunión: ${data.meetingId || this.meetingId}`);
+    });
   }
 
   // Desconectar del socket
   disconnect() {
     if (this.socket) {
       console.log('Desconectando socket');
+      
+      // Explicitly leave the meeting room if connected
+      if (this.socket.connected && this.meetingId) {
+        this.socket.emit('leave_meeting', {
+          meetingId: this.meetingId,
+          userId: this.userId
+        });
+        console.log(`Emit leave_meeting for: ${this.meetingId}`);
+      }
+      
       this.socket.disconnect();
       this.socket = null;
     }
@@ -372,6 +405,12 @@ class SocketService {
   // Enviar un mensaje
   sendMessage(message: any): boolean {
     console.log('Intentando enviar mensaje:', message);
+    
+    // Ensure the message has the necessary fields
+    if (!message.meeting_id) {
+      message.meeting_id = this.meetingId;
+      console.log('Added meeting_id to message:', this.meetingId);
+    }
     
     // Si tenemos emulador local y está activo, usarlo
     if (this.useLocalEmulator && this.localEmulator?.isConnected()) {
@@ -424,13 +463,21 @@ class SocketService {
 
     try {
       console.log('Enviando mensaje vía Socket.IO:', message);
+      
+      // Try different event names for compatibility with various server implementations
       this.socket.emit('send_message', {
         ...message,
         meetingId: this.meetingId
       });
       
-      // También emitir 'message' para mayor compatibilidad
+      // Also emit 'message' for greater compatibility
       this.socket.emit('message', {
+        ...message,
+        meetingId: this.meetingId
+      });
+      
+      // Also emit 'chat_message' for greater compatibility
+      this.socket.emit('chat_message', {
         ...message,
         meetingId: this.meetingId
       });
@@ -491,6 +538,14 @@ class SocketService {
         ...participant,
         meetingId: this.meetingId
       });
+      
+      // Also emit join_meeting to ensure participant is registered in the room
+      this.socket.emit('join_meeting', {
+        meetingId: this.meetingId || participant.meetingId,
+        userId: this.userId || participant.id,
+        userName: this.userName || participant.name
+      });
+      
       return true;
     } catch (error) {
       console.error('Error al registrar participante:', error);
@@ -503,9 +558,6 @@ class SocketService {
     if (this.socket) {
       this.socket.disconnect();
     }
-    
-    // Priorizar emulador local en reconexión
-    this.useLocalEmulator = true;
     
     if (!this.meetingId || !this.userId || !this.userName) {
       console.error('No se puede reconectar: Faltan datos de la reunión');
@@ -582,6 +634,24 @@ class SocketService {
         console.error('Error en manejador de estado de conexión:', error);
       }
     });
+  }
+  
+  // Get current socket ID
+  getSocketId(): string | null {
+    return this.socket?.id || null;
+  }
+  
+  // Debug method - Get current connection info
+  getDebugInfo(): any {
+    return {
+      socketId: this.socket?.id || null,
+      connected: this.isConnected(),
+      meetingId: this.meetingId,
+      userId: this.userId,
+      userName: this.userName,
+      useLocalEmulator: this.useLocalEmulator,
+      reconnectAttempts: this.reconnectAttempts
+    };
   }
 }
 

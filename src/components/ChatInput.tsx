@@ -32,6 +32,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
   
   const handleSend = () => {
     if (!message.trim() || disabled) return;
+    
+    console.log('Sending message:', message);
     onSendMessage(message);
     setMessage('');
   };
@@ -39,9 +41,15 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const handleReconnect = async () => {
     setIsReconnecting(true);
     try {
+      console.log('Attempting reconnection...');
       const success = await socketService.reconnect();
-      if (!success) {
-        console.error('No se pudo reconectar al servidor');
+      
+      if (success) {
+        toast.success('Conexión reestablecida');
+        console.log('Reconnection successful');
+      } else {
+        console.error('Reconnection failed');
+        toast.error('No se pudo reconectar al servidor. Usando modo local.');
       }
     } catch (error) {
       console.error('Error al intentar reconectar:', error);
