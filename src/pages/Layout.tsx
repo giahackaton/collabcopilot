@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import UserProfileDialog from '@/components/UserProfileDialog';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from '@/integrations/supabase/client';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { session, signOut } = useAuth();
@@ -27,6 +28,35 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     full_name?: string;
     avatar_url?: string;
   }>({});
+  
+  const fetchUserProfile = async () => {
+    if (!session?.user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, full_name, avatar_url')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (error) throw error;
+      
+      setProfileData({
+        username: data?.username || "",
+        full_name: data?.full_name || "",
+        avatar_url: data?.avatar_url || "",
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+  
+  // Fetch profile data when session changes
+  useEffect(() => {
+    if (session?.user) {
+      fetchUserProfile();
+    }
+  }, [session?.user]);
   
   const handleSignOut = () => {
     signOut();
@@ -165,7 +195,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         open={isProfileOpen} 
         onOpenChange={setIsProfileOpen}
         onProfileUpdated={() => {
-          // We could fetch updated profile data here if needed
+          fetchUserProfile();
         }}
       />
     </div>
