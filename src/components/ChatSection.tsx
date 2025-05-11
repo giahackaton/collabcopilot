@@ -42,8 +42,10 @@ const ChatSection: React.FC<ChatSectionProps> = ({
               }
             </Badge>
           </div>
-          <div className="flex gap-2">
-            <ScriptSelector onScriptActivate={onScriptActivate} />
+          <div className="flex gap-2 items-center">
+            <div className="opacity-50 hover:opacity-100 transition-opacity">
+              <ScriptSelector onScriptActivate={onScriptActivate} />
+            </div>
             <Button size="sm" variant="outline" onClick={onShowParticipantsDialog}>
               <UserPlus className="h-4 w-4" />
               <span className="hidden sm:inline ml-2">Invitar</span>

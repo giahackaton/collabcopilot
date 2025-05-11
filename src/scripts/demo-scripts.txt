@@ -1,0 +1,122 @@
+
+# GUIONES DE DEMOSTRACIÓN PARA MEETINGS.AI
+
+## INSTRUCCIONES DE USO
+1. Activa el "Modo Presentación" haciendo clic en el botón discreto en la esquina superior derecha
+2. Selecciona uno de los guiones predefinidos
+3. Sigue las sugerencias de mensajes que aparecen debajo del chat
+4. Al final, pide "Creame un resumen de lo que hablamos" para activar la generación del resumen
+5. Finaliza la reunión usando el botón "Finalizar Reunión y Generar Resumen"
+
+## GUIÓN 1: PLANIFICACIÓN DE SPRINT
+
+### PASO 1: TÚ
+"Bienvenidos al sprint planning. ¿Qué objetivos tenemos para este sprint?"
+
+### PASO 2: AI RESPONDERÁ
+"Debemos finalizar el módulo de autenticación y comenzar con el dashboard de analíticas."
+
+### PASO 3: TÚ
+"¿Cuántos puntos de historia estimamos para el módulo de autenticación?"
+
+### PASO 4: AI RESPONDERÁ
+"Según nuestras estimaciones previas, el módulo de autenticación debería ser de 8 puntos de historia."
+
+### PASO 5: TÚ
+"¿Y para el dashboard de analíticas?"
+
+### PASO 6: AI RESPONDERÁ
+"El dashboard de analíticas es más complejo, estimamos 13 puntos de historia."
+
+### PASO 7: TÚ
+"¿Qué dependencias tenemos para estas tareas?"
+
+### PASO 8: AI RESPONDERÁ
+"Para el dashboard necesitamos que la API de reportes esté lista, que está siendo trabajada por el equipo de backend."
+
+### PASO 9: TÚ
+"¿Hay algún riesgo que debamos considerar?"
+
+### PASO 10: AI RESPONDERÁ
+"El principal riesgo es la integración con el nuevo proveedor de autenticación, podría requerir ajustes adicionales."
+
+### PASO 11: TÚ
+"Creame un resumen de lo que hablamos"
+
+### PASO 12: AI RESPONDERÁ
+"He creado un resumen de la reunión con los puntos clave discutidos: objetivos del sprint, estimaciones de tareas, dependencias identificadas y riesgos potenciales."
+
+### PASO 13: FINALIZAR REUNIÓN
+Haz clic en "Finalizar Reunión y Generar Resumen"
+
+
+## GUIÓN 2: REVISIÓN DE DISEÑO
+
+### PASO 1: TÚ
+"Vamos a revisar los nuevos diseños de la interfaz de usuario. ¿Podemos ver los mockups?"
+
+### PASO 2: AI RESPONDERÁ
+"He preparado los mockups para la nueva sección de perfil de usuario y configuración de cuenta."
+
+### PASO 3: TÚ
+"Los colores parecen diferentes a nuestra guía de estilo. ¿Podemos aclarar esto?"
+
+### PASO 4: AI RESPONDERÁ
+"Tienes razón. Hemos actualizado la paleta de colores para mejorar el contraste y la accesibilidad según las directrices WCAG 2.1."
+
+### PASO 5: TÚ
+"¿Cómo afecta esto a nuestra consistencia visual en todas las plataformas?"
+
+### PASO 6: AI RESPONDERÁ
+"Hemos documentado la nueva paleta en Figma y creado componentes actualizados para web y móvil, garantizando consistencia en todas las plataformas."
+
+### PASO 7: TÚ
+"¿Hemos realizado pruebas de usabilidad con los nuevos diseños?"
+
+### PASO 8: AI RESPONDERÁ
+"Sí, realizamos pruebas con 8 usuarios y los resultados fueron positivos. La tasa de completado de tareas mejoró un 23% con el nuevo diseño."
+
+### PASO 9: TÚ
+"Creame un resumen de lo que hablamos"
+
+### PASO 10: AI RESPONDERÁ
+"He elaborado un resumen detallado de nuestra revisión de diseño, incluyendo los cambios en la paleta de colores, las mejoras de accesibilidad, la documentación en Figma y los resultados de las pruebas de usabilidad."
+
+### PASO 11: FINALIZAR REUNIÓN
+Haz clic en "Finalizar Reunión y Generar Resumen"
+
+
+## GUIÓN 3: ESTADO DEL PROYECTO
+
+### PASO 1: TÚ
+"Hagamos un repaso del estado actual del proyecto. ¿Cómo vamos con los tiempos de entrega?"
+
+### PASO 2: AI RESPONDERÁ
+"Actualmente estamos un 15% adelantados en el cronograma para el desarrollo de backend, pero el frontend tiene un retraso del 8% debido a cambios en los requisitos."
+
+### PASO 3: TÚ
+"¿Cuáles son los principales problemas que estamos enfrentando?"
+
+### PASO 4: AI RESPONDERÁ
+"El principal desafío es la integración con el sistema de pagos de terceros. Su API ha cambiado y necesitamos adaptar nuestro código."
+
+### PASO 5: TÚ
+"¿Necesitamos recursos adicionales para cumplir con la fecha de entrega?"
+
+### PASO 6: AI RESPONDERÁ
+"Recomendaría asignar un desarrollador más al equipo de frontend por las próximas dos semanas para compensar el retraso y mantener la fecha de entrega original."
+
+### PASO 7: TÚ
+"¿Cómo está el presupuesto del proyecto hasta ahora?"
+
+### PASO 8: AI RESPONDERÁ
+"Estamos dentro del presupuesto, con un 62% utilizado y un 65% del proyecto completado, lo que nos da un ligero margen positivo."
+
+### PASO 9: TÚ
+"Creame un resumen de lo que hablamos"
+
+### PASO 10: AI RESPONDERÁ
+"He preparado un resumen completo del estado del proyecto, incluyendo progreso, desafíos actuales, necesidades de recursos y situación presupuestaria."
+
+### PASO 11: FINALIZAR REUNIÓN
+Haz clic en "Finalizar Reunión y Generar Resumen"

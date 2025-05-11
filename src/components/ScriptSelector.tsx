@@ -48,27 +48,27 @@ const ScriptSelector: React.FC<ScriptSelectorProps> = ({ onScriptActivate }) => 
   return (
     <>
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={() => setShowDialog(true)}
-        className="flex items-center gap-2"
+        className="opacity-30 hover:opacity-100 transition-opacity"
       >
-        <span className="text-xs">Usar guión predefinido</span>
+        <span className="text-xs">Modo Presentación</span>
       </Button>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Seleccionar guión de reunión</DialogTitle>
+            <DialogTitle>Modo Presentación</DialogTitle>
             <DialogDescription>
-              Elige un guión predefinido para simular una conversación con el asistente de IA.
+              Selecciona un guión predefinido para la demostración.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <label htmlFor="script-select" className="text-sm text-gray-500">
-                Guión de reunión
+                Guión de demostración
               </label>
               <Select
                 value={selectedScript}
@@ -99,7 +99,7 @@ const ScriptSelector: React.FC<ScriptSelectorProps> = ({ onScriptActivate }) => 
               Cancelar
             </Button>
             <Button onClick={handleActivateScript}>
-              Activar guión
+              Activar modo
             </Button>
           </DialogFooter>
         </DialogContent>

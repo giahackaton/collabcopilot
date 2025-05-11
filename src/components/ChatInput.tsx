@@ -72,6 +72,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  // Solo mostrar la interfaz de guiones en desarrollo, no en producción
+  const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+
   return (
     <div className="border-t p-4">
       {disabled && (
@@ -93,7 +96,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       )}
       
-      {scriptActive && suggestedMessage && (
+      {isDevelopment && scriptActive && suggestedMessage && (
         <div className="mb-2 p-2 bg-blue-50 border border-blue-100 rounded flex items-center justify-between">
           <div className="flex items-center text-blue-600 text-sm flex-1">
             <BookOpen className="h-4 w-4 mr-2 flex-shrink-0" /> 
@@ -110,10 +113,10 @@ const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       )}
       
-      {scriptActive && (
+      {isDevelopment && scriptActive && (
         <div className="flex justify-end mb-2">
           <Badge variant="outline" className="bg-blue-50 text-blue-600">
-            Modo guión activo
+            Modo presentación activo
           </Badge>
         </div>
       )}
