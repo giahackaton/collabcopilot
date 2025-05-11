@@ -40,72 +40,101 @@ serve(async (req) => {
     // Use OpenAI API to generate a summary
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openaiApiKey) {
-      return new Response(JSON.stringify({ error: 'OpenAI API Key is not configured' }), {
+      console.error('OpenAI API Key is not configured');
+      return new Response(JSON.stringify({ 
+        error: 'OpenAI API Key is not configured',
+        message: 'Please add your OpenAI API Key to the Supabase Edge Function secrets.'
+      }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Generate summary using OpenAI
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'Eres un asistente que genera resúmenes concisos pero completos de reuniones. Identifica los puntos principales, decisiones tomadas, tareas asignadas y próximos pasos. Estructura tu respuesta en secciones claramente definidas.'
-          },
-          {
-            role: 'user',
-            content: `Por favor, resume la siguiente transcripción de reunión titulada "${title}": \n\n${content}`
-          }
-        ],
-        temperature: 0.5,
-        max_tokens: 1000,
-      }),
-    });
+    console.log('Generating summary for meeting:', title);
+    console.log('Content length:', content.length, 'characters');
+    
+    try {
+      // Generate summary using OpenAI
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'Eres un asistente que genera resúmenes concisos pero completos de reuniones. Identifica los puntos principales, decisiones tomadas, tareas asignadas y próximos pasos. Estructura tu respuesta en secciones claramente definidas.'
+            },
+            {
+              role: 'user',
+              content: `Por favor, resume la siguiente transcripción de reunión titulada "${title}": \n\n${content}`
+            }
+          ],
+          temperature: 0.5,
+          max_tokens: 1000,
+        }),
+      });
 
-    const openaiData = await openaiResponse.json();
-    const summary = openaiData.choices[0]?.message?.content;
+      if (!openaiResponse.ok) {
+        const errorData = await openaiResponse.json();
+        console.error('OpenAI API error:', errorData);
+        throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+      }
 
-    if (!summary) {
-      throw new Error('Failed to generate summary from OpenAI');
+      const openaiData = await openaiResponse.json();
+      const summary = openaiData.choices[0]?.message?.content;
+
+      if (!summary) {
+        throw new Error('Failed to generate summary from OpenAI');
+      }
+
+      console.log('Summary generated successfully');
+
+      // Store the summary in the database
+      const { data, error } = await supabase
+        .from('summaries')
+        .insert([{
+          title,
+          user_id,
+          meeting_content: content,
+          summary,
+          participants,
+        }])
+        .select('*');
+
+      if (error) {
+        console.error('Error inserting summary into database:', error);
+        throw error;
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        data
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
+    } catch (openaiError) {
+      console.error('Error calling OpenAI API:', openaiError);
+      return new Response(JSON.stringify({
+        error: 'Failed to generate summary',
+        details: openaiError.message
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
-
-    // Store the summary in the database
-    const { data, error } = await supabase
-      .from('summaries')
-      .insert([{
-        title,
-        user_id,
-        meeting_content: content,
-        summary,
-        participants,
-      }])
-      .select('*');
-
-    if (error) {
-      throw error;
-    }
-
-    return new Response(JSON.stringify({
-      success: true,
-      data
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
 
   } catch (error) {
     console.error('Error processing request:', error);
     
     return new Response(JSON.stringify({
-      error: error.message || 'An unexpected error occurred'
+      error: 'An unexpected error occurred',
+      details: error.message
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

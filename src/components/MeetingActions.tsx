@@ -33,9 +33,17 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
       return;
     }
 
+    // Check if there are any messages
+    if (messages.length <= 1) { // Only the system welcome message
+      toast.warning('La reunión no tiene mensajes suficientes para generar un resumen');
+      resetMeeting(); // Reset meeting state anyway
+      setShowEndMeetingDialog(false);
+      return;
+    }
+
     // Prepare meeting content from messages
     const meetingContent = messages
-      .map(msg => `[${msg.sender}]: ${msg.content}`)
+      .map(msg => `[${msg.sender_name || msg.sender}]: ${msg.content}`)
       .join('\n\n');
     
     // Extract participant emails

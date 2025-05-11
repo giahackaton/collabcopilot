@@ -25,6 +25,7 @@ export const useMeetingSummary = () => {
       setLoading(true);
       toast.info('Generando resumen de la reunión...');
 
+      // Call the Supabase Edge Function with improved error handling
       const { data, error } = await supabase.functions.invoke('generate-summary', {
         body: {
           title,
@@ -34,14 +35,30 @@ export const useMeetingSummary = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error invoking generate-summary function:', error);
+        toast.error(`Error al generar el resumen: ${error.message}`);
+        return false;
+      }
+
+      if (data.error) {
+        console.error('Error from generate-summary function:', data.error);
+        
+        // Check if the error is related to missing API key
+        if (data.error.includes('OpenAI API Key is not configured')) {
+          toast.error('Se requiere configurar la clave de API de OpenAI en las funciones Edge de Supabase');
+        } else {
+          toast.error(`Error al generar el resumen: ${data.error}`);
+        }
+        return false;
+      }
 
       toast.success('Resumen generado correctamente');
       navigate('/summaries');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating summary:', error);
-      toast.error('Ocurrió un error al generar el resumen');
+      toast.error(`Error al generar el resumen: ${error.message || 'Error desconocido'}`);
       return false;
     } finally {
       setLoading(false);
