@@ -1,10 +1,11 @@
+
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 // Configuración del servidor Socket.IO
 // Usamos el servidor de Render proporcionado, con fallback al demo server
-const SOCKET_URL = 'https://collabcopilot.onrender.com' || import.meta.env.VITE_SOCKET_URL || 'https://chat-demo.lovable.dev';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://collabcopilot.onrender.com' || 'https://chat-demo.lovable.dev';
 
 interface SocketOptions {
   meetingId: string;
