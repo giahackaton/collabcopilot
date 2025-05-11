@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
@@ -121,8 +120,11 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Suscribirse a nuevos mensajes
   useEffect(() => {
     const unsubscribe = socketService.onMessage((message) => {
-      // Verificar que el mensaje sea para esta reunión
-      if (message.meeting_id !== meetingState.meetingId) {
+      console.log('Mensaje recibido en context:', message);
+      
+      // Verificar que el mensaje sea para esta reunión o no tenga meeting_id
+      if (message.meeting_id && message.meeting_id !== meetingState.meetingId) {
+        console.log('Mensaje descartado, no corresponde a esta reunión');
         return;
       }
       

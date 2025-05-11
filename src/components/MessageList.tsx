@@ -17,6 +17,11 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Log messages for debugging
+  useEffect(() => {
+    console.log("MessageList - Mensajes actuales:", messages);
+  }, [messages]);
+
   // Group consecutive messages from the same sender
   const groupedMessages = messages.reduce<{ sender: string; messages: Message[] }[]>((acc, msg) => {
     const lastGroup = acc[acc.length - 1];
@@ -60,7 +65,9 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
             No hay mensajes aún. ¡Comienza la conversación!
           </p>
           <p className="text-gray-400 text-xs text-center">
-            El chat está funcionando en modo local (sin servidor)
+            {!isLocalMode ? 
+              "Conectando al servidor de chat..." : 
+              "El chat está funcionando en modo local (sin servidor)"}
           </p>
         </div>
       )}

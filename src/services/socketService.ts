@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 // Configuración del servidor Socket.IO
-// Usamos el servidor de Render proporcionado, con fallback al demo server
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://collabcopilot.onrender.com' || 'https://chat-demo.lovable.dev';
+// Usamos el servidor de Render proporcionado como prioridad
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://collabcopilot.onrender.com';
 
 interface SocketOptions {
   meetingId: string;
@@ -143,7 +143,7 @@ class SocketService {
   private connectionHandlers: ((status: boolean) => void)[] = [];
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private useLocalEmulator = true; // Usamos emulador local por defecto, pero intentaremos conectar con el servidor real primero
+  private useLocalEmulator = false; // Cambiado a false para priorizar la conexión al servidor real
   
   constructor() {
     this.localEmulator = new LocalEmulator();
@@ -328,7 +328,13 @@ class SocketService {
     
     // Eventos específicos de la aplicación
     this.socket.on('new_message', (data) => {
-      console.log('Mensaje recibido:', data);
+      console.log('Mensaje recibido del servidor:', data);
+      this.notifyMessageHandlers(data);
+    });
+
+    // Añadir manejo específico para 'message' que algunos servidores pueden usar
+    this.socket.on('message', (data) => {
+      console.log('Mensaje recibido (evento message):', data);
       this.notifyMessageHandlers(data);
     });
 
@@ -365,6 +371,8 @@ class SocketService {
 
   // Enviar un mensaje
   sendMessage(message: any): boolean {
+    console.log('Intentando enviar mensaje:', message);
+    
     // Si tenemos emulador local y está activo, usarlo
     if (this.useLocalEmulator && this.localEmulator?.isConnected()) {
       try {
@@ -420,6 +428,13 @@ class SocketService {
         ...message,
         meetingId: this.meetingId
       });
+      
+      // También emitir 'message' para mayor compatibilidad
+      this.socket.emit('message', {
+        ...message,
+        meetingId: this.meetingId
+      });
+      
       return true;
     } catch (error) {
       console.error('Error al enviar mensaje:', error);

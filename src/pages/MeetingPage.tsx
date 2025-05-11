@@ -41,7 +41,8 @@ const MeetingPage = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [socketConnected, setSocketConnected] = useState(false);
   const [scriptEnabled, setScriptEnabled] = useState(false);
-  const [isLocalMode, setIsLocalMode] = useState(false); // Inicialmente intentaremos conectar con el servidor
+  // Inicialmente intentaremos conectar al servidor remoto
+  const [isLocalMode, setIsLocalMode] = useState(false);
 
   // Verificar parámetros de invitación y unirse automáticamente a la reunión
   useEffect(() => {
@@ -114,6 +115,7 @@ const MeetingPage = () => {
   // Suscribirse al estado de conexión del socket
   useEffect(() => {
     const unsubscribe = socketService.onConnectionStatus((connected) => {
+      console.log("Estado de conexión actualizado:", connected);
       setSocketConnected(connected);
     });
     
@@ -135,7 +137,7 @@ const MeetingPage = () => {
     }
   }, [meetingState.isActive, session.user, userProfile, socketConnected]);
 
-  // Add new effect to handle local mode changes
+  // Add effect to handle local mode changes
   useEffect(() => {
     if (meetingState.isActive && session.user && userProfile) {
       // When local mode is toggled, reconnect the socket service
@@ -344,6 +346,7 @@ const MeetingPage = () => {
 
   // Toggle local mode handler
   const handleToggleLocalMode = (localMode: boolean) => {
+    console.log("Cambiando modo local a:", localMode);
     setIsLocalMode(localMode);
   };
 
