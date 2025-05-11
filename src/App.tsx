@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from '@/context/AuthContext';
 import { MeetingProvider } from '@/context/MeetingContext';
-import Layout from "@/pages/Layout";
+import Layout from "@/components/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Pages
@@ -20,6 +20,24 @@ import LogbookPage from "./pages/LogbookPage";
 import TasksPage from "./pages/TasksPage";
 import DecisionsPage from "./pages/DecisionsPage";
 import NotFound from "./pages/NotFound";
+
+// Feature pages
+import FeaturesPage from "./pages/features/FeaturesPage";
+import PricingPage from "./pages/features/PricingPage";
+import IntegrationsPage from "./pages/features/IntegrationsPage";
+import RoadmapPage from "./pages/features/RoadmapPage";
+
+// Resource pages
+import BlogPage from "./pages/resources/BlogPage";
+import TutorialsPage from "./pages/resources/TutorialsPage";
+import SupportPage from "./pages/resources/SupportPage";
+import DocumentationPage from "./pages/resources/DocumentationPage";
+
+// Company pages
+import AboutPage from "./pages/company/AboutPage";
+import CareersPage from "./pages/company/CareersPage";
+import ContactPage from "./pages/company/ContactPage";
+import PressPage from "./pages/company/PressPage";
 
 // Create a new QueryClient instance inside the component
 function App() {
@@ -45,6 +63,24 @@ function App() {
                   {/* Landing page as the root route */}
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/auth" element={<AuthPage />} />
+                  
+                  {/* Feature pages */}
+                  <Route path="/features" element={<FeaturesPage />} />
+                  <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/integrations" element={<IntegrationsPage />} />
+                  <Route path="/roadmap" element={<RoadmapPage />} />
+                  
+                  {/* Resource pages */}
+                  <Route path="/blog" element={<BlogPage />} />
+                  <Route path="/tutorials" element={<TutorialsPage />} />
+                  <Route path="/support" element={<SupportPage />} />
+                  <Route path="/documentation" element={<DocumentationPage />} />
+                  
+                  {/* Company pages */}
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/careers" element={<CareersPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/press" element={<PressPage />} />
                   
                   {/* Protected dashboard routes inside Layout */}
                   <Route 

@@ -25,7 +25,7 @@ const LandingPage = () => {
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
                 Optimiza tus reuniones con <span className="text-indigo-200">CollabCopilot</span>
               </h1>
-              <p className="text-xl text-indigo-100 mb-8 max-w-lg">
+              <p className="text-xl text-white mb-8 max-w-lg">
                 La solución integral para reuniones colaborativas eficientes. Captura decisiones, genera resúmenes automáticamente y da seguimiento a las tareas sin esfuerzo.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -35,7 +35,7 @@ const LandingPage = () => {
                   </Link>
                 </Button>
                 <Button variant="outline" size="lg" className="border-white text-white hover:bg-indigo-700">
-                  <Link to="/auth">Ver demostración</Link>
+                  <Link to="/features">Ver demostración</Link>
                 </Button>
               </div>
             </div>
@@ -290,7 +290,7 @@ const LandingPage = () => {
               </Link>
             </Button>
             <Button variant="outline" size="lg" className="border-white text-white hover:bg-indigo-700">
-              <Link to="/auth">Contactar ventas</Link>
+              <Link to="/contact">Contactar ventas</Link>
             </Button>
           </div>
         </div>
@@ -312,37 +312,37 @@ const LandingPage = () => {
             <div>
               <h4 className="text-lg text-white font-medium mb-4">Producto</h4>
               <ul className="space-y-2">
-                <li><Link to="/auth" className="hover:text-white">Características</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Precios</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Integraciones</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Hoja de ruta</Link></li>
+                <li><Link to="/features" className="hover:text-white">Características</Link></li>
+                <li><Link to="/pricing" className="hover:text-white">Precios</Link></li>
+                <li><Link to="/integrations" className="hover:text-white">Integraciones</Link></li>
+                <li><Link to="/roadmap" className="hover:text-white">Hoja de ruta</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-lg text-white font-medium mb-4">Recursos</h4>
               <ul className="space-y-2">
-                <li><Link to="/auth" className="hover:text-white">Blog</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Tutoriales</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Soporte</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Documentación</Link></li>
+                <li><Link to="/blog" className="hover:text-white">Blog</Link></li>
+                <li><Link to="/tutorials" className="hover:text-white">Tutoriales</Link></li>
+                <li><Link to="/support" className="hover:text-white">Soporte</Link></li>
+                <li><Link to="/documentation" className="hover:text-white">Documentación</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-lg text-white font-medium mb-4">Empresa</h4>
               <ul className="space-y-2">
-                <li><Link to="/auth" className="hover:text-white">Sobre nosotros</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Carreras</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Contacto</Link></li>
-                <li><Link to="/auth" className="hover:text-white">Prensa</Link></li>
+                <li><Link to="/about" className="hover:text-white">Sobre nosotros</Link></li>
+                <li><Link to="/careers" className="hover:text-white">Carreras</Link></li>
+                <li><Link to="/contact" className="hover:text-white">Contacto</Link></li>
+                <li><Link to="/press" className="hover:text-white">Prensa</Link></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p>© 2025 CollabCopilot. Todos los derechos reservados.</p>
             <div className="flex gap-4 mt-4 md:mt-0">
-              <Link to="/auth" className="hover:text-white">Términos</Link>
-              <Link to="/auth" className="hover:text-white">Privacidad</Link>
-              <Link to="/auth" className="hover:text-white">Cookies</Link>
+              <Link to="/features" className="hover:text-white">Términos</Link>
+              <Link to="/features" className="hover:text-white">Privacidad</Link>
+              <Link to="/features" className="hover:text-white">Cookies</Link>
             </div>
           </div>
         </div>
