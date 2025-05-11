@@ -50,6 +50,16 @@ export const useMeetingSummary = () => {
       if (data.error) {
         console.error('Error from generate-summary function:', data.error);
         
+        // Check if the error is related to insufficient quota
+        if (data.code === 'insufficient_quota' || 
+            (data.error && data.error.includes('cuota'))) {
+          toast.error(
+            'La cuenta de OpenAI ha excedido su cuota de uso. Por favor, verifica el estado de tu cuenta o utiliza una cuenta diferente.',
+            { duration: 6000 }
+          );
+          return false;
+        }
+        
         // Check if the error is related to missing API key
         if (data.error.includes('OpenAI API Key is not configured')) {
           toast.error('Se requiere configurar la clave de API de OpenAI en las funciones Edge de Supabase');

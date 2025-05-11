@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface MeetingActionsProps {
@@ -26,8 +26,10 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
   const { meetingState, resetMeeting } = useMeetingContext();
   const [meetingTitle, setMeetingTitle] = useState(meetingState.meetingName);
   const { generateSummary, loading } = useMeetingSummary();
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   const handleFinishMeeting = async () => {
+    setSummaryError(null);
     if (!meetingTitle.trim()) {
       toast.error('El título de la reunión es obligatorio');
       return;
@@ -58,16 +60,23 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
     // Extract participant emails
     const participantEmails = participants.map(p => p.email).filter(Boolean);
     
-    // Generate summary
-    const success = await generateSummary(
-      meetingTitle, 
-      meetingContent, 
-      participantEmails
-    );
-    
-    if (success) {
-      resetMeeting(); // Reset meeting state after successful summary generation
-      setShowEndMeetingDialog(false);
+    try {
+      // Generate summary
+      const success = await generateSummary(
+        meetingTitle, 
+        meetingContent, 
+        participantEmails
+      );
+      
+      if (success) {
+        resetMeeting(); // Reset meeting state after successful summary generation
+        setShowEndMeetingDialog(false);
+      } else {
+        setSummaryError('No se pudo generar el resumen. Intente nuevamente o póngase en contacto con soporte.');
+      }
+    } catch (error) {
+      console.error('Error al finalizar reunión:', error);
+      setSummaryError(`Error inesperado: ${error instanceof Error ? error.message : 'Desconocido'}`);
     }
   };
 
@@ -101,9 +110,26 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
             <p className="text-sm text-gray-500">
               Se generará un resumen de la conversación utilizando IA. Este proceso puede tardar unos segundos.
             </p>
+            {summaryError && (
+              <div className="bg-red-50 p-3 rounded-md border border-red-200">
+                <div className="flex items-start gap-2 text-red-700">
+                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Error al generar el resumen</p>
+                    <p className="text-sm">{summaryError}</p>
+                    <p className="text-xs mt-1 text-gray-600">
+                      Si el error persiste, verifica que tu cuenta de OpenAI tenga crédito suficiente.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEndMeetingDialog(false)} disabled={loading}>
+            <Button variant="outline" onClick={() => {
+              setShowEndMeetingDialog(false);
+              setSummaryError(null);
+            }} disabled={loading}>
               Cancelar
             </Button>
             <Button onClick={handleFinishMeeting} disabled={loading}>

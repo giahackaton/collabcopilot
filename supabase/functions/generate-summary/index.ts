@@ -92,6 +92,20 @@ serve(async (req) => {
       if (!openaiResponse.ok) {
         const errorData = await openaiResponse.json();
         console.error('OpenAI API error:', errorData);
+        
+        // Check specifically for quota exceeded error
+        if (errorData.error?.type === 'insufficient_quota' || 
+            (errorData.error?.message && errorData.error.message.includes('quota'))) {
+          return new Response(JSON.stringify({
+            error: 'Cuota de OpenAI excedida',
+            details: 'La cuenta de OpenAI ha excedido su cuota. Por favor, verifica el estado de tu cuenta o utiliza una cuenta diferente.',
+            code: 'insufficient_quota'
+          }), {
+            status: 402, // Payment Required
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        
         throw new Error(`OpenAI API error: ${errorData.error?.message || JSON.stringify(errorData)}`);
       }
 
