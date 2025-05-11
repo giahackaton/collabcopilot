@@ -53,9 +53,12 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       ))}
       
       {messages.length === 0 && (
-        <div className="flex justify-center items-center h-40">
+        <div className="flex flex-col justify-center items-center h-40 space-y-2">
           <p className="text-gray-500 text-center">
             No hay mensajes aún. ¡Comienza la conversación!
+          </p>
+          <p className="text-gray-400 text-xs text-center">
+            El chat está funcionando en modo local (sin servidor)
           </p>
         </div>
       )}

@@ -1,6 +1,7 @@
 
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 
 // Configuración del servidor Socket.IO
 // Usamos un servidor Socket.IO público para pruebas si no hay una URL definida
@@ -12,8 +13,128 @@ interface SocketOptions {
   userName: string;
 }
 
+// Emulador local para pruebas sin conexión a servidor
+class LocalEmulator {
+  private handlers: Map<string, Array<(data: any) => void>> = new Map();
+  private isActive: boolean = false;
+  private meetingData: { [meetingId: string]: any[] } = {};
+  private participants: { [meetingId: string]: any[] } = {};
+  
+  constructor() {
+    console.log('Iniciando emulador local de chat');
+  }
+  
+  connect(): boolean {
+    this.isActive = true;
+    console.log('Emulador local conectado');
+    return true;
+  }
+  
+  disconnect(): void {
+    this.isActive = false;
+    console.log('Emulador local desconectado');
+  }
+  
+  isConnected(): boolean {
+    return this.isActive;
+  }
+  
+  on(event: string, handler: (data: any) => void): Function {
+    if (!this.handlers.has(event)) {
+      this.handlers.set(event, []);
+    }
+    
+    this.handlers.get(event)?.push(handler);
+    
+    return () => {
+      const eventHandlers = this.handlers.get(event);
+      if (eventHandlers) {
+        this.handlers.set(event, eventHandlers.filter(h => h !== handler));
+      }
+    };
+  }
+  
+  emit(event: string, data: any): boolean {
+    console.log(`Emulador local emitiendo evento: ${event}`, data);
+    
+    const handlers = this.handlers.get(event);
+    if (handlers) {
+      setTimeout(() => {
+        handlers.forEach(handler => {
+          try {
+            handler(data);
+          } catch (error) {
+            console.error(`Error en manejador de evento ${event}:`, error);
+          }
+        });
+      }, 100); // Simular pequeño delay de red
+    }
+    
+    // Manejar eventos específicos del chat
+    if (event === 'send_message') {
+      const meetingId = data.meeting_id;
+      if (!this.meetingData[meetingId]) {
+        this.meetingData[meetingId] = [];
+      }
+      
+      this.meetingData[meetingId].push(data);
+      
+      // Simular entrega del mensaje a todos los participantes
+      setTimeout(() => {
+        const messageHandlers = this.handlers.get('new_message');
+        if (messageHandlers) {
+          messageHandlers.forEach(handler => {
+            try {
+              handler(data);
+            } catch (error) {
+              console.error('Error en manejador de mensaje:', error);
+            }
+          });
+        }
+      }, 300);
+    }
+    
+    if (event === 'register_participant') {
+      const meetingId = data.meetingId;
+      if (!this.participants[meetingId]) {
+        this.participants[meetingId] = [];
+      }
+      
+      // Verificar que el participante no exista ya
+      const exists = this.participants[meetingId].some(p => 
+        p.email === data.email && p.id === data.id
+      );
+      
+      if (!exists) {
+        this.participants[meetingId].push(data);
+        
+        // Notificar a los manejadores sobre el nuevo participante
+        setTimeout(() => {
+          const participantHandlers = this.handlers.get('new_participant');
+          if (participantHandlers) {
+            participantHandlers.forEach(handler => {
+              try {
+                handler({
+                  type: 'new_participant',
+                  meetingId,
+                  participant: data
+                });
+              } catch (error) {
+                console.error('Error en manejador de participante:', error);
+              }
+            });
+          }
+        }, 300);
+      }
+    }
+    
+    return true;
+  }
+}
+
 class SocketService {
   private socket: Socket | null = null;
+  private localEmulator: LocalEmulator | null = null;
   private meetingId: string | null = null;
   private userId: string | null = null;
   private userName: string | null = null;
@@ -22,6 +143,11 @@ class SocketService {
   private connectionHandlers: ((status: boolean) => void)[] = [];
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
+  private useLocalEmulator = true; // Usamos emulador local por defecto
+  
+  constructor() {
+    this.localEmulator = new LocalEmulator();
+  }
   
   // Iniciar conexión al socket
   connect(options: SocketOptions): Promise<boolean> {
@@ -37,73 +163,148 @@ class SocketService {
 
       console.log(`Conectando socket para reunión: ${this.meetingId}`);
       
-      // Conectar con los datos de autenticación como query params
-      this.socket = io(SOCKET_URL, {
-        query: {
-          meetingId: this.meetingId,
-          userId: this.userId,
-          userName: this.userName
-        },
-        reconnection: true,
-        reconnectionAttempts: this.maxReconnectAttempts,
-        reconnectionDelay: 1000,
-        timeout: 10000,
-        transports: ['websocket', 'polling'] // Intentamos primero websocket, luego polling
-      });
-
-      // Manejar eventos de conexión
-      this.socket.on('connect', () => {
-        console.log('Socket conectado exitosamente');
-        this.reconnectAttempts = 0;
-        this.notifyConnectionStatus(true);
-        resolve(true);
-      });
-
-      this.socket.on('connect_error', (error) => {
-        console.error('Error de conexión socket:', error);
-        toast.error('Error de conexión al chat. Intentando conectar con servidor demo...');
+      // Si estamos usando el emulador local, conectar directamente
+      if (this.useLocalEmulator) {
+        console.log('Usando emulador local para chat (sin servidor externo)');
         
-        this.reconnectAttempts++;
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-          console.log(`Intentando conectar con servidor demo después de ${this.reconnectAttempts} intentos fallidos`);
-          // Si fallamos en conectar al servidor configurado, intentamos con el demo
-          if (this.socket) {
-            this.socket.disconnect();
-            
-            // Conectar al servidor demo
-            setTimeout(() => {
-              this.socket = io('https://chat-demo.lovable.dev', {
-                query: {
-                  meetingId: this.meetingId,
-                  userId: this.userId,
-                  userName: this.userName
-                },
-                reconnection: true
-              });
-              
-              this.setupEventHandlers();
-            }, 1000);
-          }
-        }
+        const connected = this.localEmulator?.connect();
         
-        this.notifyConnectionStatus(false);
-        resolve(false);
-      });
-
-      this.socket.on('disconnect', (reason) => {
-        console.log(`Socket desconectado: ${reason}`);
-        this.notifyConnectionStatus(false);
-      });
-
-      this.setupEventHandlers();
-
-      // Error fallback para intentar reconexión manual si la automática falla
-      setTimeout(() => {
-        if (!this.socket?.connected) {
-          console.error('Tiempo de espera para conexión socket excedido');
+        if (connected) {
+          toast.success("Conectado al chat de la reunión (modo local)");
+          this.notifyConnectionStatus(true);
+          
+          // Configurar manejadores para eventos locales
+          this.setupLocalEventHandlers();
+          
+          resolve(true);
+        } else {
+          toast.error("Error iniciando emulador local de chat");
+          this.notifyConnectionStatus(false);
           resolve(false);
         }
-      }, 10000);
+        
+        return;
+      }
+      
+      // Si llegamos aquí, intentamos Socket.IO real
+      try {
+        // Conectar con los datos de autenticación como query params
+        this.socket = io(SOCKET_URL, {
+          query: {
+            meetingId: this.meetingId,
+            userId: this.userId,
+            userName: this.userName
+          },
+          reconnection: true,
+          reconnectionAttempts: this.maxReconnectAttempts,
+          reconnectionDelay: 1000,
+          timeout: 10000,
+          transports: ['websocket', 'polling'] // Intentamos primero websocket, luego polling
+        });
+
+        // Manejar eventos de conexión
+        this.socket.on('connect', () => {
+          console.log('Socket conectado exitosamente');
+          this.reconnectAttempts = 0;
+          this.notifyConnectionStatus(true);
+          resolve(true);
+        });
+
+        this.socket.on('connect_error', (error) => {
+          console.error('Error de conexión socket:', error);
+          toast.error('Error de conexión al chat. Intentando conectar con servidor demo...');
+          
+          this.reconnectAttempts++;
+          if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+            console.log(`Intentando conectar con servidor demo después de ${this.reconnectAttempts} intentos fallidos`);
+            // Si fallamos en conectar al servidor configurado, activamos el emulador local
+            if (this.socket) {
+              this.socket.disconnect();
+              this.socket = null;
+              
+              // Activar emulador local
+              console.log('Activando emulador local después de fallos de conexión');
+              this.useLocalEmulator = true;
+              const success = this.localEmulator?.connect();
+              
+              if (success) {
+                toast.success("Modo sin conexión activado. Chat funcionando localmente.");
+                this.notifyConnectionStatus(true);
+                this.setupLocalEventHandlers();
+                resolve(true);
+                return;
+              }
+            }
+          }
+          
+          this.notifyConnectionStatus(false);
+          resolve(false);
+        });
+
+        this.socket.on('disconnect', (reason) => {
+          console.log(`Socket desconectado: ${reason}`);
+          this.notifyConnectionStatus(false);
+        });
+
+        this.setupEventHandlers();
+
+        // Error fallback para intentar reconexión manual si la automática falla
+        setTimeout(() => {
+          if (!this.socket?.connected) {
+            console.error('Tiempo de espera para conexión socket excedido');
+            
+            // Activar emulador local como fallback
+            console.log('Activando emulador local como fallback por timeout');
+            this.useLocalEmulator = true;
+            const success = this.localEmulator?.connect();
+            
+            if (success) {
+              toast.success("Modo sin conexión activado. Chat funcionando localmente.");
+              this.notifyConnectionStatus(true);
+              this.setupLocalEventHandlers();
+              resolve(true);
+            } else {
+              resolve(false);
+            }
+          }
+        }, 5000);
+      } catch (error) {
+        console.error('Error al intentar conexión socket:', error);
+        
+        // Activar emulador local como último recurso
+        console.log('Activando emulador local por excepción');
+        this.useLocalEmulator = true;
+        const success = this.localEmulator?.connect();
+        
+        if (success) {
+          toast.success("Modo sin conexión activado. Chat funcionando localmente.");
+          this.notifyConnectionStatus(true);
+          this.setupLocalEventHandlers();
+          resolve(true);
+        } else {
+          resolve(false);
+        }
+      }
+    });
+  }
+  
+  private setupLocalEventHandlers() {
+    if (!this.localEmulator) return;
+    
+    // Configurar manejadores de eventos locales
+    this.localEmulator.on('new_message', (data) => {
+      console.log('Mensaje recibido (local):', data);
+      this.notifyMessageHandlers(data);
+    });
+
+    this.localEmulator.on('new_participant', (data) => {
+      console.log('Participante conectado (local):', data);
+      this.notifyParticipantHandlers(data);
+    });
+
+    this.localEmulator.on('participant_left', (data) => {
+      console.log('Participante desconectado (local):', data);
+      this.notifyParticipantHandlers(data);
     });
   }
   
@@ -134,23 +335,72 @@ class SocketService {
       console.log('Desconectando socket');
       this.socket.disconnect();
       this.socket = null;
-      this.meetingId = null;
-      this.userId = null;
-      this.userName = null;
-      this.notifyConnectionStatus(false);
     }
+    
+    if (this.localEmulator?.isConnected()) {
+      console.log('Desconectando emulador local');
+      this.localEmulator.disconnect();
+    }
+    
+    this.meetingId = null;
+    this.userId = null;
+    this.userName = null;
+    this.notifyConnectionStatus(false);
   }
 
   // Enviar un mensaje
   sendMessage(message: any): boolean {
+    // Si tenemos emulador local y está activo, usarlo
+    if (this.useLocalEmulator && this.localEmulator?.isConnected()) {
+      try {
+        console.log('Enviando mensaje vía emulador local:', message);
+        
+        // Asignar ID único al mensaje si no lo tiene
+        if (!message.id) {
+          message.id = uuidv4();
+        }
+        
+        this.localEmulator.emit('send_message', message);
+        return true;
+      } catch (error) {
+        console.error('Error al enviar mensaje local:', error);
+        return false;
+      }
+    }
+    
+    // De lo contrario, usar socket real
     if (!this.socket?.connected) {
       console.error('No se puede enviar mensaje: Socket no conectado');
       toast.error('Error de conexión. No se pudo enviar el mensaje.');
+      
+      // Intentar con emulador local como fallback
+      if (this.localEmulator) {
+        this.useLocalEmulator = true;
+        const connected = this.localEmulator.connect();
+        
+        if (connected) {
+          console.log('Cambiando a modo local para envío de mensajes');
+          toast.success("Modo sin conexión activado. Chat funcionando localmente.");
+          this.notifyConnectionStatus(true);
+          this.setupLocalEventHandlers();
+          
+          // Reintentar envío
+          try {
+            console.log('Reintentando enviar mensaje vía emulador local:', message);
+            this.localEmulator.emit('send_message', message);
+            return true;
+          } catch (error) {
+            console.error('Error al enviar mensaje local (reintento):', error);
+            return false;
+          }
+        }
+      }
+      
       return false;
     }
 
     try {
-      console.log('Enviando mensaje:', message);
+      console.log('Enviando mensaje vía Socket.IO:', message);
       this.socket.emit('send_message', {
         ...message,
         meetingId: this.meetingId
@@ -164,13 +414,49 @@ class SocketService {
 
   // Registrar la presencia de un participante
   registerParticipant(participant: any): boolean {
+    // Si tenemos emulador local y está activo, usarlo
+    if (this.useLocalEmulator && this.localEmulator?.isConnected()) {
+      try {
+        console.log('Registrando participante vía emulador local:', participant);
+        this.localEmulator.emit('register_participant', participant);
+        return true;
+      } catch (error) {
+        console.error('Error al registrar participante local:', error);
+        return false;
+      }
+    }
+    
+    // De lo contrario, usar socket real
     if (!this.socket?.connected) {
       console.error('No se puede registrar participante: Socket no conectado');
+      
+      // Intentar con emulador local como fallback
+      if (this.localEmulator) {
+        this.useLocalEmulator = true;
+        const connected = this.localEmulator.connect();
+        
+        if (connected) {
+          console.log('Cambiando a modo local para registro de participante');
+          this.notifyConnectionStatus(true);
+          this.setupLocalEventHandlers();
+          
+          // Reintentar registro
+          try {
+            console.log('Reintentando registrar participante vía emulador local:', participant);
+            this.localEmulator.emit('register_participant', participant);
+            return true;
+          } catch (error) {
+            console.error('Error al registrar participante local (reintento):', error);
+            return false;
+          }
+        }
+      }
+      
       return false;
     }
 
     try {
-      console.log('Registrando participante:', participant);
+      console.log('Registrando participante vía Socket.IO:', participant);
       this.socket.emit('register_participant', {
         ...participant,
         meetingId: this.meetingId
@@ -187,6 +473,9 @@ class SocketService {
     if (this.socket) {
       this.socket.disconnect();
     }
+    
+    // Priorizar emulador local en reconexión
+    this.useLocalEmulator = true;
     
     if (!this.meetingId || !this.userId || !this.userName) {
       console.error('No se puede reconectar: Faltan datos de la reunión');
@@ -226,6 +515,9 @@ class SocketService {
 
   // Verificar si está conectado
   isConnected(): boolean {
+    if (this.useLocalEmulator) {
+      return this.localEmulator?.isConnected() || false;
+    }
     return !!this.socket?.connected;
   }
 

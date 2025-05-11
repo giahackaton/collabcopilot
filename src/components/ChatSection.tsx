@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, UserPlus, Wifi, WifiOff } from 'lucide-react';
+import { MessageSquare, UserPlus, Wifi, WifiOff, Laptop } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
@@ -34,7 +34,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
             <span>Chat de la Reunión</span>
             <Badge variant={isConnected ? "outline" : "destructive"} className="ml-2">
               {isConnected ? 
-                <><Wifi className="h-3 w-3 mr-1" /> Conectado</> : 
+                <><Laptop className="h-3 w-3 mr-1" /> Modo Local</> : 
                 <><WifiOff className="h-3 w-3 mr-1" /> Desconectado</>
               }
             </Badge>

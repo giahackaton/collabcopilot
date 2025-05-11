@@ -57,7 +57,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             className="text-red-600 hover:bg-red-100 p-1 h-8"
           >
             <RefreshCcw className={`h-4 w-4 ${isReconnecting ? 'animate-spin' : ''}`} />
-            <span className="ml-1 text-xs">{isReconnecting ? 'Reconectando...' : 'Reconectar'}</span>
+            <span className="ml-1 text-xs">{isReconnecting ? 'Activando...' : 'Activar local'}</span>
           </Button>
         </div>
       )}
