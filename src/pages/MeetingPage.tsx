@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,6 +17,7 @@ import ParticipantsCard from '@/components/ParticipantsCard';
 import InviteParticipantDialog from '@/components/InviteParticipantDialog';
 import ParticipantProfileDialog from '@/components/ParticipantProfileDialog';
 import ConnectionModeToggle from '@/components/ConnectionModeToggle';
+import ScriptSelector from '@/components/ScriptSelector';
 import { type Message, type Participant } from '@/context/MeetingContext';
 
 const MeetingPage = () => {
@@ -363,11 +365,12 @@ const MeetingPage = () => {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
           {/* Connection mode toggle */}
-          <div className="lg:col-span-2 mb-2">
+          <div className="lg:col-span-2 mb-2 flex justify-between items-center">
             <ConnectionModeToggle 
               isLocalMode={isLocalMode}
               onToggle={handleToggleLocalMode}
             />
+            <ScriptSelector onScriptActivate={handleScriptActivate} />
           </div>
 
           {/* Chat section */}
