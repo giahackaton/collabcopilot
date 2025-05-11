@@ -41,13 +41,22 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
       return;
     }
 
+    // Check if there are enough user messages (not just system messages)
+    const userMessages = messages.filter(msg => !msg.isAI);
+    if (userMessages.length === 0) {
+      toast.warning('La reunión no tiene mensajes de usuario para generar un resumen');
+      resetMeeting(); // Reset meeting state anyway
+      setShowEndMeetingDialog(false);
+      return;
+    }
+
     // Prepare meeting content from messages
     const meetingContent = messages
       .map(msg => `[${msg.sender_name || msg.sender}]: ${msg.content}`)
       .join('\n\n');
     
     // Extract participant emails
-    const participantEmails = participants.map(p => p.email);
+    const participantEmails = participants.map(p => p.email).filter(Boolean);
     
     // Generate summary
     const success = await generateSummary(

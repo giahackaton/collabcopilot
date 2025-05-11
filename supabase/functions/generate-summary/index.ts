@@ -32,6 +32,16 @@ serve(async (req) => {
       });
     }
 
+    // Validate content length
+    if (content.length < 10) {
+      return new Response(JSON.stringify({
+        error: "Content is too short to generate a meaningful summary"
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') as string;
@@ -52,6 +62,7 @@ serve(async (req) => {
 
     console.log('Generating summary for meeting:', title);
     console.log('Content length:', content.length, 'characters');
+    console.log('Participants:', participants.length);
     
     try {
       // Generate summary using OpenAI
@@ -81,7 +92,7 @@ serve(async (req) => {
       if (!openaiResponse.ok) {
         const errorData = await openaiResponse.json();
         console.error('OpenAI API error:', errorData);
-        throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(`OpenAI API error: ${errorData.error?.message || JSON.stringify(errorData)}`);
       }
 
       const openaiData = await openaiResponse.json();

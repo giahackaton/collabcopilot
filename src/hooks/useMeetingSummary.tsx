@@ -20,6 +20,12 @@ export const useMeetingSummary = () => {
       toast.error('El título y el contenido son obligatorios');
       return false;
     }
+    
+    // Verify content length
+    if (content.length < 10) {
+      toast.error('El contenido es demasiado corto para generar un resumen significativo');
+      return false;
+    }
 
     try {
       setLoading(true);
