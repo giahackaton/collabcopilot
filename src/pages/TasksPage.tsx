@@ -50,6 +50,67 @@ const TasksPage = () => {
 
   useEffect(() => {
     fetchTasks();
+    
+    // Configurar suscripción en tiempo real para actualizaciones de tareas
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'tasks' 
+        }, 
+        (payload) => {
+          console.log('Nueva tarea detectada:', payload);
+          // Solo agregar si pertenece al usuario actual
+          if (payload.new && payload.new.user_id === session?.user?.id) {
+            setTasks(prevTasks => [payload.new, ...prevTasks]);
+            toast.info('Nueva tarea agregada', {
+              description: `${payload.new.subject}`,
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'tasks' 
+        }, 
+        (payload) => {
+          console.log('Tarea actualizada:', payload);
+          if (payload.new && payload.new.user_id === session?.user?.id) {
+            setTasks(prevTasks => 
+              prevTasks.map(task => 
+                task.id === payload.new.id ? payload.new : task
+              )
+            );
+          }
+        }
+      )
+      .on(
+        'postgres_changes', 
+        { 
+          event: 'DELETE', 
+          schema: 'public', 
+          table: 'tasks' 
+        }, 
+        (payload) => {
+          console.log('Tarea eliminada:', payload);
+          if (payload.old && payload.old.user_id === session?.user?.id) {
+            setTasks(prevTasks => 
+              prevTasks.filter(task => task.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [session]);
 
   const fetchTasks = async () => {
@@ -65,6 +126,7 @@ const TasksPage = () => {
         
       if (error) throw error;
       
+      console.log('Tareas cargadas:', data);
       setTasks(data || []);
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -147,8 +209,8 @@ const TasksPage = () => {
         toast.success('Tarea creada correctamente');
       }
       
-      fetchTasks();
       setShowTaskDialog(false);
+      // No es necesario llamar a fetchTasks() ya que la suscripción en tiempo real actualizará la lista
     } catch (error) {
       console.error('Error saving task:', error);
       toast.error('No se pudo guardar la tarea');
@@ -169,8 +231,8 @@ const TasksPage = () => {
         
       if (error) throw error;
       
-      fetchTasks();
       toast.success(`Tarea marcada como ${newStatus === 'completed' ? 'completada' : 'pendiente'}`);
+      // La suscripción en tiempo real actualizará la lista automáticamente
     } catch (error) {
       console.error('Error updating task status:', error);
       toast.error('No se pudo actualizar el estado de la tarea');
@@ -186,9 +248,9 @@ const TasksPage = () => {
         
       if (error) throw error;
       
-      fetchTasks();
       setShowDetailsDialog(false);
       toast.success('Tarea eliminada correctamente');
+      // La suscripción en tiempo real actualizará la lista automáticamente
     } catch (error) {
       console.error('Error deleting task:', error);
       toast.error('No se pudo eliminar la tarea');

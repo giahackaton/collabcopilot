@@ -6,3 +6,9 @@ verify_jwt = true
 
 [functions.send-invitation]
 verify_jwt = true
+
+[realtime]
+enabled = true
+
+[[realtime.tables]]
+name = "tasks"
