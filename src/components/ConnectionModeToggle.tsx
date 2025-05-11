@@ -3,6 +3,7 @@ import React from 'react';
 import { Toggle } from "@/components/ui/toggle";
 import { Wifi, Laptop } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ConnectionModeToggleProps {
   isLocalMode: boolean;
@@ -10,6 +11,8 @@ interface ConnectionModeToggleProps {
 }
 
 const ConnectionModeToggle: React.FC<ConnectionModeToggleProps> = ({ isLocalMode, onToggle }) => {
+  const isMobile = useIsMobile();
+  
   const handleToggle = () => {
     const newMode = !isLocalMode;
     onToggle(newMode);
@@ -23,7 +26,7 @@ const ConnectionModeToggle: React.FC<ConnectionModeToggleProps> = ({ isLocalMode
   
   return (
     <div className="flex items-center justify-end gap-2 mb-2">
-      <span className="text-xs text-gray-500">
+      <span className={`text-xs text-gray-500 ${isMobile ? 'hidden sm:inline' : ''}`}>
         {isLocalMode ? "Modo local" : "Conectado al servidor"}
       </span>
       <Toggle

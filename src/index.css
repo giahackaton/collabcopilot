@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -97,5 +98,39 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Estilos responsivos */
+@media screen and (max-width: 640px) {
+  .flex-col-mobile {
+    flex-direction: column;
+  }
+  
+  .p-mobile {
+    padding: 0.5rem;
+  }
+  
+  .text-sm-mobile {
+    font-size: 0.875rem;
+  }
+  
+  .mb-1-mobile {
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* Reset de algunos estilos para App.css */
+#root {
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+@media (max-width: 640px) {
+  #root {
+    padding: 0;
   }
 }

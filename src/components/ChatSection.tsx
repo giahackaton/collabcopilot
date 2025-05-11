@@ -8,6 +8,7 @@ import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import ScriptSelector from './ScriptSelector';
 import { type Message } from '@/context/MeetingContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ChatSectionProps {
   messages: Message[];
@@ -28,21 +29,23 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   onShowParticipantsDialog,
   onScriptActivate = () => {}
 }) => {
+  const isMobile = useIsMobile();
+
   return (
     <Card className="flex-1 overflow-hidden">
       <CardHeader className="border-b p-4">
-        <CardTitle className="text-xl flex justify-between items-center">
+        <CardTitle className="text-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-600" />
-            <span>Chat de la Reunión</span>
-            <Badge variant={isConnected ? "outline" : "destructive"} className="ml-2">
+            <span className="text-base sm:text-xl">Chat de la Reunión</span>
+            <Badge variant={isConnected ? "outline" : "destructive"} className="ml-1">
               {isConnected ? 
-                <><Wifi className="h-3 w-3 mr-1" /> Conectado</> : 
-                <><WifiOff className="h-3 w-3 mr-1" /> Desconectado</>
+                <><Wifi className="h-3 w-3 mr-1" /> <span className="text-xs">{isMobile ? '' : 'Conectado'}</span></> : 
+                <><WifiOff className="h-3 w-3 mr-1" /> <span className="text-xs">{isMobile ? '' : 'Desconectado'}</span></>
               }
             </Badge>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center mt-1 sm:mt-0">
             <div className="opacity-50 hover:opacity-100 transition-opacity">
               <ScriptSelector onScriptActivate={onScriptActivate} />
             </div>
