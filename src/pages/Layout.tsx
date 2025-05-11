@@ -29,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import Sidebar from '@/components/ui/sidebar';
 import UserProfileDialog from '@/components/UserProfileDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { session, signOut } = useAuth();
@@ -37,6 +38,32 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [userProfile, setUserProfile] = useState<{username?: string, avatar_url?: string}>({});
+  
+  // Fetch user profile data when session changes
+  useEffect(() => {
+    if (session.user) {
+      fetchUserProfile();
+    }
+  }, [session.user]);
+
+  const fetchUserProfile = async () => {
+    if (!session.user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (error) throw error;
+      
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
   
   // Don't show navigation on auth pages
   if (location.pathname === '/auth') {
@@ -67,11 +94,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     );
   };
 
+  // Get display name (username or email)
+  const displayName = userProfile?.username || session.user?.email?.split('@')[0] || 'Usuario';
+  const avatarLetter = (userProfile?.username?.[0] || session.user?.email?.[0] || 'U').toUpperCase();
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
-        <Sidebar defaultCollapsed={sidebarCollapsed}>
+        <Sidebar defaultCollapsed={false}>
           <div className="mb-6">
             <h1 className={`text-xl font-bold text-blue-600 flex items-center gap-2 ${sidebarCollapsed ? "justify-center" : ""}`}>
               <Layers className="h-5 w-5" />
@@ -83,11 +114,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {session.user && (
               <div className={`mb-6 p-3 bg-blue-50 rounded-lg flex ${sidebarCollapsed ? "flex-col" : ""} items-center gap-3`}>
                 <Avatar className="h-10 w-10 shrink-0">
-                  <AvatarFallback>{session.user.email?.[0].toUpperCase()}</AvatarFallback>
+                  {userProfile?.avatar_url ? (
+                    <AvatarImage src={userProfile.avatar_url} />
+                  ) : (
+                    <AvatarFallback>{avatarLetter}</AvatarFallback>
+                  )}
                 </Avatar>
                 {!sidebarCollapsed && (
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{session.user.email}</p>
+                    <p className="font-medium truncate">{displayName}</p>
                     <p className="text-xs text-gray-500 truncate">Sesión activa</p>
                   </div>
                 )}
@@ -173,10 +208,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 {session.user && (
                   <div className="mb-6 p-3 bg-blue-50 rounded-lg flex items-center gap-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarFallback>{session.user.email?.[0].toUpperCase()}</AvatarFallback>
+                      {userProfile?.avatar_url ? (
+                        <AvatarImage src={userProfile.avatar_url} />
+                      ) : (
+                        <AvatarFallback>{avatarLetter}</AvatarFallback>
+                      )}
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{session.user.email}</p>
+                      <p className="font-medium truncate">{displayName}</p>
                       <p className="text-xs text-gray-500">Sesión activa</p>
                     </div>
                   </div>
