@@ -2,9 +2,9 @@
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 
-// Usaremos Supabase Function URL como servidor Socket.IO
-// Ya que Supabase ahora admite WebSockets a través de Edge Functions
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://vnpacggbyaebkybmguoc.supabase.co';
+// Configuración del servidor Socket.IO
+// Usamos un servidor Socket.IO público para pruebas si no hay una URL definida
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://chat-demo.lovable.dev';
 
 interface SocketOptions {
   meetingId: string;
@@ -20,6 +20,8 @@ class SocketService {
   private messageHandlers: ((data: any) => void)[] = [];
   private participantHandlers: ((data: any) => void)[] = [];
   private connectionHandlers: ((status: boolean) => void)[] = [];
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
   
   // Iniciar conexión al socket
   connect(options: SocketOptions): Promise<boolean> {
@@ -43,21 +45,47 @@ class SocketService {
           userName: this.userName
         },
         reconnection: true,
-        reconnectionAttempts: 5,
+        reconnectionAttempts: this.maxReconnectAttempts,
         reconnectionDelay: 1000,
-        timeout: 10000
+        timeout: 10000,
+        transports: ['websocket', 'polling'] // Intentamos primero websocket, luego polling
       });
 
       // Manejar eventos de conexión
       this.socket.on('connect', () => {
         console.log('Socket conectado exitosamente');
+        this.reconnectAttempts = 0;
         this.notifyConnectionStatus(true);
         resolve(true);
       });
 
       this.socket.on('connect_error', (error) => {
         console.error('Error de conexión socket:', error);
-        toast.error('Error de conexión al chat. Reintentando...');
+        toast.error('Error de conexión al chat. Intentando conectar con servidor demo...');
+        
+        this.reconnectAttempts++;
+        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+          console.log(`Intentando conectar con servidor demo después de ${this.reconnectAttempts} intentos fallidos`);
+          // Si fallamos en conectar al servidor configurado, intentamos con el demo
+          if (this.socket) {
+            this.socket.disconnect();
+            
+            // Conectar al servidor demo
+            setTimeout(() => {
+              this.socket = io('https://chat-demo.lovable.dev', {
+                query: {
+                  meetingId: this.meetingId,
+                  userId: this.userId,
+                  userName: this.userName
+                },
+                reconnection: true
+              });
+              
+              this.setupEventHandlers();
+            }, 1000);
+          }
+        }
+        
         this.notifyConnectionStatus(false);
         resolve(false);
       });
@@ -67,22 +95,7 @@ class SocketService {
         this.notifyConnectionStatus(false);
       });
 
-      // Eventos específicos de la aplicación
-      this.socket.on('new_message', (data) => {
-        console.log('Mensaje recibido:', data);
-        this.notifyMessageHandlers(data);
-      });
-
-      this.socket.on('new_participant', (data) => {
-        console.log('Participante conectado:', data);
-        this.notifyParticipantHandlers(data);
-      });
-
-      this.socket.on('participant_left', (data) => {
-        console.log('Participante desconectado:', data);
-        // También lo manejamos con los manejadores de participantes
-        this.notifyParticipantHandlers(data);
-      });
+      this.setupEventHandlers();
 
       // Error fallback para intentar reconexión manual si la automática falla
       setTimeout(() => {
@@ -91,6 +104,27 @@ class SocketService {
           resolve(false);
         }
       }, 10000);
+    });
+  }
+  
+  private setupEventHandlers() {
+    if (!this.socket) return;
+    
+    // Eventos específicos de la aplicación
+    this.socket.on('new_message', (data) => {
+      console.log('Mensaje recibido:', data);
+      this.notifyMessageHandlers(data);
+    });
+
+    this.socket.on('new_participant', (data) => {
+      console.log('Participante conectado:', data);
+      this.notifyParticipantHandlers(data);
+    });
+
+    this.socket.on('participant_left', (data) => {
+      console.log('Participante desconectado:', data);
+      // También lo manejamos con los manejadores de participantes
+      this.notifyParticipantHandlers(data);
     });
   }
 
@@ -146,6 +180,24 @@ class SocketService {
       console.error('Error al registrar participante:', error);
       return false;
     }
+  }
+
+  // Forzar reconexión
+  reconnect(): Promise<boolean> {
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+    
+    if (!this.meetingId || !this.userId || !this.userName) {
+      console.error('No se puede reconectar: Faltan datos de la reunión');
+      return Promise.resolve(false);
+    }
+    
+    return this.connect({
+      meetingId: this.meetingId,
+      userId: this.userId,
+      userName: this.userName
+    });
   }
 
   // Suscribirse a mensajes nuevos

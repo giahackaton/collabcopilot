@@ -31,7 +31,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   }, []);
 
   return (
-    <div className="h-[50vh] overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 h-[400px] overflow-y-auto p-4 space-y-4">
       {groupedMessages.map((group, groupIndex) => (
         <div key={groupIndex} className={`flex ${group.messages[0].isAI ? 'justify-start' : 'justify-end'}`}>
           <div className={`max-w-[80%] ${group.messages[0].isAI ? 'bg-blue-100 text-blue-900' : 'bg-gray-100 text-gray-900'} rounded-lg p-3 shadow-sm`}>

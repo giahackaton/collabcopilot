@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mic, PauseCircle, Send, AlertCircle } from 'lucide-react';
+import { Mic, PauseCircle, Send, AlertCircle, RefreshCcw } from 'lucide-react';
+import { socketService } from '@/services/socketService';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -18,19 +19,46 @@ const ChatInput: React.FC<ChatInputProps> = ({
   disabled = false
 }) => {
   const [message, setMessage] = useState('');
+  const [isReconnecting, setIsReconnecting] = useState(false);
   
   const handleSend = () => {
     if (!message.trim() || disabled) return;
     onSendMessage(message);
     setMessage('');
   };
+  
+  const handleReconnect = async () => {
+    setIsReconnecting(true);
+    try {
+      const success = await socketService.reconnect();
+      if (!success) {
+        console.error('No se pudo reconectar al servidor');
+      }
+    } catch (error) {
+      console.error('Error al intentar reconectar:', error);
+    } finally {
+      setIsReconnecting(false);
+    }
+  };
 
   return (
     <div className="border-t p-4">
       {disabled && (
-        <div className="mb-2 p-2 bg-red-50 border border-red-100 rounded flex items-center text-red-600 text-sm">
-          <AlertCircle className="h-4 w-4 mr-2" /> 
-          Sin conexión. Reconectando...
+        <div className="mb-2 p-2 bg-red-50 border border-red-100 rounded flex items-center justify-between text-red-600 text-sm">
+          <div className="flex items-center">
+            <AlertCircle className="h-4 w-4 mr-2" /> 
+            Sin conexión. Reconectando...
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleReconnect}
+            disabled={isReconnecting}
+            className="text-red-600 hover:bg-red-100 p-1 h-8"
+          >
+            <RefreshCcw className={`h-4 w-4 ${isReconnecting ? 'animate-spin' : ''}`} />
+            <span className="ml-1 text-xs">{isReconnecting ? 'Reconectando...' : 'Reconectar'}</span>
+          </Button>
         </div>
       )}
       <div className="flex items-center gap-2">

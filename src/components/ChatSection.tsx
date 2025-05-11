@@ -47,7 +47,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 flex flex-col h-[calc(100%-64px)]">
         <MessageList messages={messages} />
         <ChatInput 
           onSendMessage={onSendMessage}

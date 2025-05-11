@@ -88,6 +88,7 @@ const MeetingPage = () => {
         
         if (connected) {
           console.log("Conexión Socket.IO exitosa");
+          toast.success("Conectado al chat de la reunión");
         } else {
           console.error("Error al conectar con Socket.IO");
           toast.error("Error de conexión al chat. La funcionalidad puede estar limitada.");
@@ -100,12 +101,21 @@ const MeetingPage = () => {
     }
     
     return () => {
-      if (socketConnected && !meetingState.isActive) {
+      if (socketConnected) {
         socketService.disconnect();
         setSocketConnected(false);
       }
     };
   }, [meetingState.isActive, meetingState.meetingId, session.user, userProfile]);
+
+  // Suscribirse al estado de conexión del socket
+  useEffect(() => {
+    const unsubscribe = socketService.onConnectionStatus((connected) => {
+      setSocketConnected(connected);
+    });
+    
+    return unsubscribe;
+  }, []);
 
   // Añadir usuario actual como participante al unirse a una reunión
   useEffect(() => {
