@@ -80,7 +80,7 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
     }
   };
 
-  // New function to finish meeting without generating summary
+  // Function to finish meeting without generating summary
   const handleFinishWithoutSummary = () => {
     resetMeeting();
     setShowEndMeetingDialog(false);
@@ -132,30 +132,31 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
               </div>
             )}
           </div>
-          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => {
-              setShowEndMeetingDialog(false);
-              setSummaryError(null);
-            }} disabled={loading}>
-              Cancelar
-            </Button>
-            <Button 
-              variant="secondary"
-              onClick={handleFinishWithoutSummary}
-              className="w-full sm:w-auto"
-            >
-              Finalizar sin generar resumen
-            </Button>
-            <Button onClick={handleFinishMeeting} disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generando...
-                </>
-              ) : (
-                'Finalizar y Generar Resumen'
-              )}
-            </Button>
+          <DialogFooter>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:justify-end">
+              <Button variant="outline" onClick={() => {
+                setShowEndMeetingDialog(false);
+                setSummaryError(null);
+              }} disabled={loading}>
+                Cancelar
+              </Button>
+              <Button 
+                variant="secondary"
+                onClick={handleFinishWithoutSummary}
+              >
+                Finalizar sin resumen
+              </Button>
+              <Button onClick={handleFinishMeeting} disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  'Finalizar y Generar Resumen'
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

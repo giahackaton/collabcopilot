@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,14 +9,19 @@ import { useAuth } from '@/context/AuthContext';
 import { useMeetingContext } from '@/context/MeetingContext';
 import MeetingActions from '@/components/MeetingActions';
 import {
-  MessageSquare, Send, Mic, User, Search, Download, Copy,
-  UserPlus, Settings, MoreHorizontal, Play, PauseCircle, Clock, Calendar,
-  AlertCircle
+  MessageSquare, Send, Mic, User, UserPlus, Settings, 
+  MoreHorizontal, PauseCircle, Clock, Calendar, AlertCircle
 } from 'lucide-react';
 import { 
   Dialog, DialogContent, DialogDescription, DialogHeader, 
-  DialogTitle, DialogTrigger, DialogFooter, DialogClose 
+  DialogTitle, DialogFooter, DialogClose 
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,8 +43,9 @@ const MeetingPage = () => {
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
   const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
+  const [showParticipantProfileDialog, setShowParticipantProfileDialog] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [newParticipant, setNewParticipant] = useState('');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -155,18 +162,6 @@ const MeetingPage = () => {
     toast.info(isRecording ? 'Grabación detenida' : 'Grabación iniciada');
   };
 
-  const searchInMeeting = () => {
-    toast.info('Búsqueda en reunión');
-  };
-
-  const exportMeeting = () => {
-    toast.success('Reunión exportada');
-  };
-
-  const duplicateMeeting = () => {
-    toast.success('Reunión duplicada');
-  };
-
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const isValid = emailRegex.test(email);
@@ -226,6 +221,12 @@ const MeetingPage = () => {
     } finally {
       setIsInviting(false);
     }
+  };
+
+  // New function to handle viewing participant profile
+  const handleViewParticipantProfile = (participant: Participant) => {
+    setSelectedParticipant(participant);
+    setShowParticipantProfileDialog(true);
   };
 
   return (
@@ -326,7 +327,7 @@ const MeetingPage = () => {
           </div>
 
           {/* Right sidebar */}
-          <div className="space-y-6 transition-all duration-300 ease-in-out">
+          <div className="space-y-6">
             {/* Voice assistant section */}
             <Card>
               <CardHeader className="pb-2">
@@ -358,20 +359,36 @@ const MeetingPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {participants.map((participant, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{participant.name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{participant.name}</p>
-                        <p className="text-xs text-gray-500 truncate">{participant.email}</p>
+                  {participants.length > 0 ? (
+                    participants.map((participant, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback>{participant.name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{participant.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{participant.email}</p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-white border shadow-md">
+                            <DropdownMenuItem onClick={() => handleViewParticipantProfile(participant)}>
+                              <User className="h-4 w-4 mr-2" />
+                              Ver perfil
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm text-center py-2">
+                      No hay participantes aún
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -419,6 +436,36 @@ const MeetingPage = () => {
               disabled={isInviting || !newParticipant.trim() || !!emailError}
             >
               {isInviting ? 'Enviando...' : 'Invitar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Participant Profile Dialog */}
+      <Dialog open={showParticipantProfileDialog} onOpenChange={setShowParticipantProfileDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Perfil del Participante</DialogTitle>
+          </DialogHeader>
+          {selectedParticipant && (
+            <div className="py-4">
+              <div className="flex flex-col items-center mb-4">
+                <Avatar className="h-20 w-20 mb-2">
+                  <AvatarFallback className="text-lg">{selectedParticipant.name[0]}</AvatarFallback>
+                </Avatar>
+                <h3 className="text-xl font-semibold">{selectedParticipant.name}</h3>
+                <p className="text-gray-500">{selectedParticipant.email}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-gray-500">
+                  Este participante está activo en la reunión actual.
+                </p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setShowParticipantProfileDialog(false)}>
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>

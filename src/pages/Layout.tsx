@@ -14,7 +14,6 @@ import {
   Layers,
   Menu,
   User,
-  Settings
 } from 'lucide-react';
 import {
   Sheet,
@@ -37,7 +36,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userProfile, setUserProfile] = useState<{username?: string, avatar_url?: string}>({});
   
   // Fetch user profile data when session changes or when profile is updated
@@ -89,7 +87,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         onClick={closeMenu}
       >
         <Icon className="h-4 w-4" />
-        {!sidebarCollapsed && <span className="truncate">{text}</span>}
+        <span className="truncate">{text}</span>
       </Link>
     );
   };
@@ -102,17 +100,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
-        <Sidebar defaultCollapsed={sidebarCollapsed}>
+        <Sidebar>
           <div className="mb-6">
-            <h1 className={`text-xl font-bold text-blue-600 flex items-center gap-2 ${sidebarCollapsed ? "justify-center" : ""}`}>
+            <h1 className="text-xl font-bold text-blue-600 flex items-center gap-2">
               <Layers className="h-5 w-5" />
-              {!sidebarCollapsed && <span className="truncate">CollabCopilot1.0</span>}
+              <span className="truncate">CollabCopilot1.0</span>
             </h1>
           </div>
 
           <div>
             {session.user && (
-              <div className={`mb-6 p-3 bg-blue-50 rounded-lg flex ${sidebarCollapsed ? "flex-col" : ""} items-center gap-3`}>
+              <div className="mb-6 p-3 bg-blue-50 rounded-lg flex items-center gap-3">
                 <Avatar className="h-10 w-10 shrink-0">
                   {userProfile?.avatar_url ? (
                     <AvatarImage src={userProfile.avatar_url} />
@@ -120,12 +118,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <AvatarFallback>{avatarLetter}</AvatarFallback>
                   )}
                 </Avatar>
-                {!sidebarCollapsed && (
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{displayName}</p>
-                    <p className="text-xs text-gray-500 truncate">Sesión activa</p>
-                  </div>
-                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{displayName}</p>
+                  <p className="text-xs text-gray-500 truncate">Sesión activa</p>
+                </div>
               </div>
             )}
             
@@ -151,24 +147,23 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     <li>
                       {renderLinkItem('/decisions', Search, 'Buscar Decisiones')}
                     </li>
-                    <li className={`p-2 ${sidebarCollapsed ? "text-center" : ""}`}>
+                    <li className="p-2">
                       <Button 
                         variant="outline" 
-                        size={sidebarCollapsed ? "icon" : "default"}
                         onClick={() => setIsUserProfileOpen(true)}
                         className="w-full"
                       >
                         <User className="h-4 w-4" />
-                        {!sidebarCollapsed && <span className="ml-2">Perfil</span>}
+                        <span className="ml-2">Perfil</span>
                       </Button>
                     </li>
                     <li className="pt-4 mt-4 border-t">
                       <button 
                         onClick={handleSignOut}
-                        className={`w-full text-left flex items-center gap-2 p-2 rounded hover:bg-red-100 text-red-600 ${sidebarCollapsed ? "justify-center" : ""}`}
+                        className="w-full text-left flex items-center gap-2 p-2 rounded hover:bg-red-100 text-red-600"
                       >
                         <LogOut className="h-4 w-4" />
-                        {!sidebarCollapsed && <span className="truncate">Cerrar Sesión</span>}
+                        <span className="truncate">Cerrar Sesión</span>
                       </button>
                     </li>
                   </>
