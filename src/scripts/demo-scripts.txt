@@ -1,4 +1,5 @@
 
+
 # GUIONES DE DEMOSTRACIÓN PARA MEETINGS.AI
 
 ## INSTRUCCIONES DE USO
@@ -120,3 +121,4 @@ Haz clic en "Finalizar Reunión y Generar Resumen"
 
 ### PASO 11: FINALIZAR REUNIÓN
 Haz clic en "Finalizar Reunión y Generar Resumen"
+
