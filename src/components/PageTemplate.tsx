@@ -2,6 +2,7 @@
 import React, { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import MainNavigation from './MainNavigation';
 
 interface PageTemplateProps {
   title: string;
@@ -18,6 +19,7 @@ const PageTemplate: React.FC<PageTemplateProps> = ({
 }) => {
   return (
     <div className="min-h-screen bg-white">
+      <MainNavigation />
       <div className="max-w-5xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl lg:text-6xl">
