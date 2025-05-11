@@ -18,37 +18,37 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <header className="bg-gradient-to-br from-blue-600 to-indigo-800 py-16 px-4 md:px-8">
+      <header className="bg-gradient-to-br from-indigo-600 to-purple-700 py-16 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="md:w-1/2 mb-10 md:mb-0">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-                Optimiza tus reuniones con <span className="text-blue-200">CollabCopilot</span>
+                Optimiza tus reuniones con <span className="text-indigo-200">CollabCopilot</span>
               </h1>
-              <p className="text-xl text-blue-100 mb-8 max-w-lg">
+              <p className="text-xl text-indigo-100 mb-8 max-w-lg">
                 La solución integral para reuniones colaborativas eficientes. Captura decisiones, genera resúmenes automáticamente y da seguimiento a las tareas sin esfuerzo.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50">
+                <Button size="lg" className="bg-white text-indigo-700 hover:bg-indigo-50">
                   <Link to="/auth" className="flex items-center">
                     Comenzar ahora <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button variant="outline" size="lg" className="border-white text-white hover:bg-blue-700">
-                  Ver demostración
+                <Button variant="outline" size="lg" className="border-white text-white hover:bg-indigo-700">
+                  <Link to="/auth">Ver demostración</Link>
                 </Button>
               </div>
             </div>
             <div className="md:w-1/2 relative">
               <div className="w-full h-[400px] bg-white rounded-lg shadow-xl overflow-hidden">
                 <img 
-                  src="/placeholder.svg" 
+                  src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" 
                   alt="CollabCopilot en acción" 
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end">
                   <div className="p-6">
-                    <span className="px-2 py-1 bg-blue-600 text-white text-sm rounded-full">En vivo</span>
+                    <span className="px-2 py-1 bg-indigo-600 text-white text-sm rounded-full">En vivo</span>
                     <p className="text-white text-lg font-medium mt-2">Visualiza cómo capturamos todos los detalles importantes de tu reunión</p>
                   </div>
                 </div>
@@ -74,8 +74,8 @@ const LandingPage = () => {
             {/* Feature 1 */}
             <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-6">
-                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
-                  <MessageSquare className="h-6 w-6 text-blue-600" />
+                <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-6">
+                  <MessageSquare className="h-6 w-6 text-indigo-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Reuniones Activas</h3>
                 <p className="text-gray-600 mb-4">
@@ -87,8 +87,8 @@ const LandingPage = () => {
             {/* Feature 2 */}
             <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-6">
-                <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-6">
-                  <FileText className="h-6 w-6 text-indigo-600" />
+                <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
+                  <FileText className="h-6 w-6 text-purple-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Resúmenes Automáticos</h3>
                 <p className="text-gray-600 mb-4">
@@ -113,8 +113,8 @@ const LandingPage = () => {
             {/* Feature 4 */}
             <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-6">
-                <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-6">
-                  <Book className="h-6 w-6 text-yellow-600" />
+                <div className="h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center mb-6">
+                  <Book className="h-6 w-6 text-amber-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Bitácora de Reuniones</h3>
                 <p className="text-gray-600 mb-4">
@@ -126,8 +126,8 @@ const LandingPage = () => {
             {/* Feature 5 */}
             <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-6">
-                <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
-                  <Users className="h-6 w-6 text-red-600" />
+                <div className="h-12 w-12 bg-rose-100 rounded-lg flex items-center justify-center mb-6">
+                  <Users className="h-6 w-6 text-rose-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Colaboración en Equipo</h3>
                 <p className="text-gray-600 mb-4">
@@ -139,8 +139,8 @@ const LandingPage = () => {
             {/* Feature 6 */}
             <Card className="border-none shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardContent className="pt-6">
-                <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
-                  <Search className="h-6 w-6 text-purple-600" />
+                <div className="h-12 w-12 bg-violet-100 rounded-lg flex items-center justify-center mb-6">
+                  <Search className="h-6 w-6 text-violet-600" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">Búsqueda de Decisiones</h3>
                 <p className="text-gray-600 mb-4">
@@ -166,7 +166,7 @@ const LandingPage = () => {
 
           <div className="grid md:grid-cols-3 gap-10">
             <div className="text-center">
-              <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-xl font-bold">1</div>
+              <div className="h-16 w-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-xl font-bold">1</div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Programa tu reunión</h3>
               <p className="text-gray-600">
                 Crea una nueva reunión en CollabCopilot, establece la agenda e invita a los participantes con anticipación.
@@ -174,7 +174,7 @@ const LandingPage = () => {
             </div>
 
             <div className="text-center">
-              <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-xl font-bold">2</div>
+              <div className="h-16 w-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-xl font-bold">2</div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Realiza tu reunión</h3>
               <p className="text-gray-600">
                 Durante la reunión, la plataforma captura automáticamente la conversación y permite tomar notas en tiempo real.
@@ -182,7 +182,7 @@ const LandingPage = () => {
             </div>
 
             <div className="text-center">
-              <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-xl font-bold">3</div>
+              <div className="h-16 w-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 text-white text-xl font-bold">3</div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Recibe el resumen</h3>
               <p className="text-gray-600">
                 Al finalizar, recibe un resumen completo con decisiones, tareas asignadas y puntos clave para compartir con tu equipo.
@@ -209,7 +209,13 @@ const LandingPage = () => {
             <Card className="border-none shadow-lg">
               <CardContent className="pt-6">
                 <div className="flex items-center mb-4">
-                  <div className="h-12 w-12 bg-gray-200 rounded-full mr-4"></div>
+                  <div className="h-12 w-12 bg-indigo-200 rounded-full mr-4 overflow-hidden">
+                    <img 
+                      src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80" 
+                      alt="Ana Rodríguez"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                   <div>
                     <h4 className="font-bold">Ana Rodríguez</h4>
                     <p className="text-sm text-gray-500">Directora de Proyectos</p>
@@ -225,7 +231,13 @@ const LandingPage = () => {
             <Card className="border-none shadow-lg">
               <CardContent className="pt-6">
                 <div className="flex items-center mb-4">
-                  <div className="h-12 w-12 bg-gray-200 rounded-full mr-4"></div>
+                  <div className="h-12 w-12 bg-indigo-200 rounded-full mr-4 overflow-hidden">
+                    <img 
+                      src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80" 
+                      alt="Carlos Mendoza"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                   <div>
                     <h4 className="font-bold">Carlos Mendoza</h4>
                     <p className="text-sm text-gray-500">CEO, TechStartup</p>
@@ -241,7 +253,13 @@ const LandingPage = () => {
             <Card className="border-none shadow-lg">
               <CardContent className="pt-6">
                 <div className="flex items-center mb-4">
-                  <div className="h-12 w-12 bg-gray-200 rounded-full mr-4"></div>
+                  <div className="h-12 w-12 bg-indigo-200 rounded-full mr-4 overflow-hidden">
+                    <img 
+                      src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=688&q=80" 
+                      alt="Laura Gómez"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                   <div>
                     <h4 className="font-bold">Laura Gómez</h4>
                     <p className="text-sm text-gray-500">Líder de Equipo</p>
@@ -257,22 +275,22 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-blue-600 text-white">
+      <section className="py-20 px-4 bg-gradient-to-r from-indigo-600 to-purple-700 text-white">
         <div className="max-w-5xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Transforma tus reuniones hoy mismo
           </h2>
-          <p className="text-xl mb-8 text-blue-100 max-w-3xl mx-auto">
+          <p className="text-xl mb-8 text-indigo-100 max-w-3xl mx-auto">
             Únete a los equipos que están optimizando su colaboración con CollabCopilot. Comienza gratis y descubre la diferencia.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50">
+            <Button size="lg" className="bg-white text-indigo-700 hover:bg-indigo-50">
               <Link to="/auth" className="flex items-center">
                 Registrarse gratis <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-blue-700">
-              Contactar ventas
+            <Button variant="outline" size="lg" className="border-white text-white hover:bg-indigo-700">
+              <Link to="/auth">Contactar ventas</Link>
             </Button>
           </div>
         </div>
@@ -294,37 +312,37 @@ const LandingPage = () => {
             <div>
               <h4 className="text-lg text-white font-medium mb-4">Producto</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white">Características</a></li>
-                <li><a href="#" className="hover:text-white">Precios</a></li>
-                <li><a href="#" className="hover:text-white">Integraciones</a></li>
-                <li><a href="#" className="hover:text-white">Hoja de ruta</a></li>
+                <li><Link to="/auth" className="hover:text-white">Características</Link></li>
+                <li><Link to="/auth" className="hover:text-white">Precios</Link></li>
+                <li><Link to="/auth" className="hover:text-white">Integraciones</Link></li>
+                <li><Link to="/auth" className="hover:text-white">Hoja de ruta</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-lg text-white font-medium mb-4">Recursos</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white">Blog</a></li>
-                <li><a href="#" className="hover:text-white">Tutoriales</a></li>
-                <li><a href="#" className="hover:text-white">Soporte</a></li>
-                <li><a href="#" className="hover:text-white">Documentación</a></li>
+                <li><Link to="/auth" className="hover:text-white">Blog</Link></li>
+                <li><Link to="/auth" className="hover:text-white">Tutoriales</Link></li>
+                <li><Link to="/auth" className="hover:text-white">Soporte</Link></li>
+                <li><Link to="/auth" className="hover:text-white">Documentación</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-lg text-white font-medium mb-4">Empresa</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white">Sobre nosotros</a></li>
-                <li><a href="#" className="hover:text-white">Carreras</a></li>
-                <li><a href="#" className="hover:text-white">Contacto</a></li>
-                <li><a href="#" className="hover:text-white">Prensa</a></li>
+                <li><Link to="/auth" className="hover:text-white">Sobre nosotros</Link></li>
+                <li><Link to="/auth" className="hover:text-white">Carreras</Link></li>
+                <li><Link to="/auth" className="hover:text-white">Contacto</Link></li>
+                <li><Link to="/auth" className="hover:text-white">Prensa</Link></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p>© 2025 CollabCopilot. Todos los derechos reservados.</p>
             <div className="flex gap-4 mt-4 md:mt-0">
-              <a href="#" className="hover:text-white">Términos</a>
-              <a href="#" className="hover:text-white">Privacidad</a>
-              <a href="#" className="hover:text-white">Cookies</a>
+              <Link to="/auth" className="hover:text-white">Términos</Link>
+              <Link to="/auth" className="hover:text-white">Privacidad</Link>
+              <Link to="/auth" className="hover:text-white">Cookies</Link>
             </div>
           </div>
         </div>
