@@ -6,21 +6,21 @@ import { Card, CardContent } from '@/components/ui/card';
 const AboutPage = () => {
   const teamMembers = [
     {
-      name: "Miembro 1 PromptHunters",
+      name: "Anthony George Yncahuaman Gomez",
       position: "Fundador & Desarrollador",
       bio: "Líder del equipo PromptHunters con experiencia en desarrollo web y aplicaciones basadas en IA. Especializado en crear soluciones innovadoras.",
       image: "/team-member-1.jpg" // Placeholder - you'll replace with uploaded image
     },
     {
-      name: "Miembro 2 PromptHunters",
-      position: "Diseñador & UX",
-      bio: "Responsable del diseño visual y experiencia de usuario en PromptHunters. Apasionado por crear interfaces intuitivas y atractivas.",
+      name: "Johanna Barragan Arteaga",
+      position: "Fundador & Desarrollador",
+      bio: "Responsable del diseño backend, Base de datos y Servicio de Automatizacion en PromptHunters. Especialista en Soluciones y aplicaciones IA.",
       image: "/team-member-2.jpg" // Placeholder - you'll replace with uploaded image
     },
     {
-      name: "Miembro 3 PromptHunters",
+      name: "Edwin Calvo Rincon",
       position: "Ingeniero Full Stack",
-      bio: "Desarrollador full stack del equipo PromptHunters con especialización en tecnologías React y bases de datos. Enfocado en optimización de rendimiento.",
+      bio: "Especialista en Soluciones con Agentes conversacionales con experiencia en desarrollo web y aplicaciones basadas en IA. Especializado en crear soluciones innovadoras.",
       image: "/team-member-3.jpg" // Placeholder - you'll replace with uploaded image
     }
   ];
@@ -37,7 +37,8 @@ const AboutPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
             <div>
               <p className="text-lg mb-4">
-                PromptHunters nació con la visión de transformar la forma en que las personas interactúan con la tecnología de IA, especialmente en entornos colaborativos.
+                PromptHunters nació en el hackaton de Inteligencia Artificial  AI-Hackathon.co, la hackathon más increíble de LATAM.
+1.000 Builders. 10 días. Una sola meta: crear cosas absurdamente útiles con inteligencia artificial..
               </p>
               <p className="text-lg mb-4">
                 Nuestro equipo identificó la necesidad de herramientas que aprovechen el poder de la IA para mejorar la colaboración y la productividad en equipos distribuidos.
