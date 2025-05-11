@@ -1,9 +1,21 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Mic } from 'lucide-react';
 
 const AssistantWidget: React.FC = () => {
+  useEffect(() => {
+    // Ensure the widget script is loaded and initialized properly
+    const script = document.querySelector('script[src="https://elevenlabs.io/convai-widget/index.js"]');
+    if (!script) {
+      const newScript = document.createElement('script');
+      newScript.src = "https://elevenlabs.io/convai-widget/index.js";
+      newScript.async = true;
+      newScript.type = "text/javascript";
+      document.body.appendChild(newScript);
+    }
+  }, []);
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -14,10 +26,7 @@ const AssistantWidget: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="bg-blue-50 p-4 rounded-md text-center">
-          {/* Using a div instead of the custom element to avoid potential issues */}
-          <div id="elevenlabs-widget" className="min-h-[150px]">
-            {/* ElevenLabs widget will be initialized here using JavaScript */}
-          </div>
+          <elevenlabs-convai agent-id="qpL7DFiOttmlnC5ESiBo"></elevenlabs-convai>
           <p className="text-xs text-gray-500 mt-2">
             El asistente transcribirá y analizará la conversación
           </p>
