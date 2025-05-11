@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,7 @@ const MeetingPage = () => {
   } = useMeetingContext();
   
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [message, setMessage] = useState('');
   const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
   const [showParticipantProfileDialog, setShowParticipantProfileDialog] = useState(false);
@@ -58,6 +59,29 @@ const MeetingPage = () => {
     startTime: meetingStartTime,
     isRecording
   } = meetingState;
+
+  // Check for invitation parameters and join meeting automatically
+  useEffect(() => {
+    // Check if there are invitation parameters in the URL
+    const meetingParam = searchParams.get('meeting');
+    const inviterParam = searchParams.get('inviter');
+    
+    if (meetingParam && session.user) {
+      // If there's a meeting name in the URL and user is authenticated
+      if (!meetingActive) {
+        console.log(`Automatically joining meeting "${meetingParam}" from invitation link`);
+        // Auto join the meeting with the given name
+        startMeeting(meetingParam);
+        
+        // Add a notification that user joined via invitation
+        if (inviterParam) {
+          toast.success(`Te has unido a la reunión "${meetingParam}" invitado por ${inviterParam}`);
+        } else {
+          toast.success(`Te has unido a la reunión "${meetingParam}"`);
+        }
+      }
+    }
+  }, [searchParams, session.user, meetingActive]);
 
   // Fetch user profile when component mounts
   useEffect(() => {

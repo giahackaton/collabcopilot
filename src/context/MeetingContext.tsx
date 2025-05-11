@@ -37,7 +37,7 @@ interface MeetingContextType {
 
 const defaultMeetingState: MeetingState = {
   isActive: false,
-  meetingName: 'Sprint Planning - Mayo 2025',
+  meetingName: '',
   messages: [],
   participants: [],
   startTime: null,
