@@ -370,12 +370,10 @@ const TasksPage = () => {
                     </TableCell>
                     <TableCell className={task.status === 'completed' ? 'line-through text-gray-500' : ''}>
                       <span className="font-medium">{task.subject}</span>
-                      {task.status !== 'completed' && task.due_date && new Date(task.due_date) < new Date() && (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
-                          <AlertTriangle className="h-2.5 w-2.5 mr-1" />
-                          Vencida
-                        </span>
-                      )}
+                      <span className="ml-2 inline-flex items-center rounded-full px-2 py-1 text-xs font-medium">
+                        {getStatusIcon(task.status)}
+                        <span className="ml-1">{getStatusText(task.status)}</span>
+                      </span>
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}
