@@ -50,7 +50,16 @@ const defaultMeetingState: MeetingState = {
   isRecording: false
 };
 
-const MeetingContext = createContext<MeetingContextType | undefined>(undefined);
+// Create context with a default value that won't be null
+const MeetingContext = createContext<MeetingContextType>({
+  meetingState: defaultMeetingState,
+  setMeetingActive: () => {},
+  setMeetingName: () => {},
+  addMessage: () => {},
+  addParticipant: () => {},
+  setIsRecording: () => {},
+  resetMeeting: () => {}
+});
 
 export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [meetingState, setMeetingState] = useState<MeetingState>(() => {
@@ -325,7 +334,7 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
 export const useMeetingContext = () => {
   const context = useContext(MeetingContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useMeetingContext debe usarse dentro de un MeetingProvider');
   }
   return context;

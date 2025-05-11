@@ -17,6 +17,8 @@ import ParticipantProfileDialog from '@/components/ParticipantProfileDialog';
 import { type Message, type Participant } from '@/context/MeetingContext';
 
 const MeetingPage = () => {
+  console.log("Rendering MeetingPage component");
+  
   const { session } = useAuth();
   const { 
     meetingState, 
@@ -25,6 +27,8 @@ const MeetingPage = () => {
     addParticipant,
     setIsRecording 
   } = useMeetingContext();
+  
+  console.log("MeetingPage: Context loaded", meetingState);
   
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -223,27 +227,27 @@ const MeetingPage = () => {
   return (
     <div className="flex flex-col h-full">
       <MeetingHeader 
-        meetingActive={meetingActive} 
-        meetingName={meetingName} 
-        startTime={meetingStartTime} 
+        meetingActive={meetingState.isActive} 
+        meetingName={meetingState.meetingName} 
+        startTime={meetingState.startTime} 
       />
 
-      {!meetingActive ? (
+      {!meetingState.isActive ? (
         <MeetingController onStartMeeting={startMeeting} />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
           {/* Chat section */}
           <div className="lg:col-span-2 flex flex-col">
             <ChatSection
-              messages={messages}
-              isRecording={isRecording}
+              messages={meetingState.messages}
+              isRecording={meetingState.isRecording}
               onSendMessage={handleSendMessage}
               onToggleRecording={toggleRecording}
               onShowParticipantsDialog={() => setShowParticipantsDialog(true)}
             />
             
             <div className="mt-6">
-              <MeetingActions messages={messages} participants={participants} />
+              <MeetingActions messages={meetingState.messages} participants={meetingState.participants} />
             </div>
           </div>
 
@@ -252,7 +256,7 @@ const MeetingPage = () => {
             <AssistantWidget />
 
             <ParticipantsCard
-              participants={participants}
+              participants={meetingState.participants}
               onAddParticipant={() => setShowParticipantsDialog(true)}
               onViewProfile={handleViewParticipantProfile}
             />
