@@ -5,12 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, Play } from 'lucide-react';
 import MeetingTimer from '@/components/MeetingTimer';
 import { toast } from 'sonner';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface MeetingControllerProps {
-  onStartMeeting: () => void;
+  onStartMeeting: (meetingName: string) => void;
 }
 
 const MeetingController: React.FC<MeetingControllerProps> = ({ onStartMeeting }) => {
+  const [meetingName, setMeetingName] = useState('Sprint Planning - Mayo 2025');
+  
+  const handleStartMeeting = () => {
+    if (!meetingName.trim()) {
+      toast.error('Por favor, ingresa un nombre para la reunión');
+      return;
+    }
+    onStartMeeting(meetingName);
+  };
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
@@ -20,11 +32,22 @@ const MeetingController: React.FC<MeetingControllerProps> = ({ onStartMeeting })
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="meeting-name">Nombre de la reunión</Label>
+          <Input 
+            id="meeting-name" 
+            value={meetingName} 
+            onChange={(e) => setMeetingName(e.target.value)}
+            placeholder="Ej: Sprint Planning, Retrospectiva, etc."
+          />
+        </div>
+        
         <p className="text-gray-500">
           Inicia una nueva reunión para comenzar a colaborar con tu equipo. El asistente de IA ayudará a tomar notas y generar resúmenes automáticamente.
         </p>
+        
         <Button 
-          onClick={onStartMeeting} 
+          onClick={handleStartMeeting} 
           className="w-full mt-4 flex items-center justify-center gap-2"
         >
           <Play className="h-5 w-5" />

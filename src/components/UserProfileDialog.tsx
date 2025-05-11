@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload } from 'lucide-react';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface UserProfileDialogProps {
   open: boolean;
@@ -33,8 +34,10 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChang
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form fields
   const [formData, setFormData] = useState<UserProfileData>({
@@ -74,6 +77,60 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChang
       toast.error('No se pudo cargar el perfil del usuario');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!session?.user) return;
+    
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file is an image
+    if (!file.type.startsWith('image/')) {
+      toast.error('Solo se permiten archivos de imagen');
+      return;
+    }
+    
+    try {
+      setUploadingAvatar(true);
+      
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
+      
+      // Create avatars bucket if it doesn't exist
+      const { data: bucketData, error: bucketError } = await supabase.storage.getBucket('avatars');
+      
+      if (bucketError && bucketError.message.includes('does not exist')) {
+        // Create bucket if it doesn't exist
+        await supabase.storage.createBucket('avatars', {
+          public: true,
+          fileSizeLimit: 5242880, // 5MB
+        });
+      }
+      
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file);
+        
+      if (error) throw error;
+      
+      // Get public URL
+      const { data: publicURL } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      
+      // Update form data
+      setFormData({
+        ...formData,
+        avatar_url: publicURL.publicUrl,
+      });
+      
+      toast.success('Avatar subido correctamente');
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error);
+      toast.error(`Error al subir el avatar: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -122,7 +179,7 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChang
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Perfil de Usuario</DialogTitle>
           <DialogDescription>
@@ -130,79 +187,93 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChang
           </DialogDescription>
         </DialogHeader>
         
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          </div>
-        ) : (
-          <div className="grid gap-4 py-4">
-            <div className="flex flex-col items-center space-y-4 mb-4">
-              <Avatar className="h-24 w-24">
-                {formData.avatar_url ? (
-                  <AvatarImage src={formData.avatar_url} />
-                ) : (
-                  <AvatarFallback>{formData.username?.[0]?.toUpperCase() || session.user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
-                )}
-              </Avatar>
+        <ScrollArea className="max-h-[70vh] pr-4">
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="email">Correo Electrónico</Label>
-              <Input id="email" value={session.user?.email || ''} disabled />
-              <p className="text-xs text-gray-500">El correo electrónico no se puede cambiar</p>
+          ) : (
+            <div className="grid gap-4 py-4">
+              <div className="flex flex-col items-center space-y-4 mb-4">
+                <Avatar className="h-24 w-24">
+                  {formData.avatar_url ? (
+                    <AvatarImage src={formData.avatar_url} />
+                  ) : (
+                    <AvatarFallback>{formData.username?.[0]?.toUpperCase() || session.user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
+                  )}
+                </Avatar>
+                
+                <input
+                  type="file" 
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                />
+                
+                <Button 
+                  variant="outline" 
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="flex items-center gap-2"
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {uploadingAvatar ? "Subiendo..." : "Subir avatar"}
+                </Button>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="email">Correo Electrónico</Label>
+                <Input id="email" value={session.user?.email || ''} disabled />
+                <p className="text-xs text-gray-500">El correo electrónico no se puede cambiar</p>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="username">Nombre de Usuario</Label>
+                <Input 
+                  id="username" 
+                  value={formData.username} 
+                  onChange={(e) => setFormData({...formData, username: e.target.value})}
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="fullName">Nombre Completo</Label>
+                <Input 
+                  id="fullName" 
+                  value={formData.full_name} 
+                  onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                />
+              </div>
+              
+              <div className="grid gap-2 mt-4">
+                <Label htmlFor="password">Nueva Contraseña</Label>
+                <Input 
+                  id="password" 
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                <Input 
+                  id="confirmPassword" 
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
             </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="username">Nombre de Usuario</Label>
-              <Input 
-                id="username" 
-                value={formData.username} 
-                onChange={(e) => setFormData({...formData, username: e.target.value})}
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="fullName">Nombre Completo</Label>
-              <Input 
-                id="fullName" 
-                value={formData.full_name} 
-                onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="avatarUrl">URL de Avatar</Label>
-              <Input 
-                id="avatarUrl" 
-                placeholder="https://ejemplo.com/imagen.jpg"
-                value={formData.avatar_url} 
-                onChange={(e) => setFormData({...formData, avatar_url: e.target.value})}
-              />
-            </div>
-            
-            <div className="grid gap-2 mt-4">
-              <Label htmlFor="password">Nueva Contraseña</Label>
-              <Input 
-                id="password" 
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-              <Input 
-                id="confirmPassword" 
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </ScrollArea>
         
-        <DialogFooter>
+        <DialogFooter className="mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>

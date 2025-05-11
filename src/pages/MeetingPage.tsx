@@ -52,6 +52,7 @@ const MeetingPage = () => {
   const [meetingActive, setMeetingActive] = useState(false);
   const [meetingStartTime, setMeetingStartTime] = useState<Date | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [meetingName, setMeetingName] = useState('Sprint Planning - Mayo 2025');
 
   // Fetch participants and messages when component mounts
   useEffect(() => {
@@ -95,9 +96,10 @@ const MeetingPage = () => {
     }
   };
 
-  const startMeeting = () => {
+  const startMeeting = (name: string) => {
     setMeetingActive(true);
     setMeetingStartTime(new Date());
+    setMeetingName(name);
     
     // Add system message
     const systemMessage: Message = {
@@ -234,7 +236,7 @@ const MeetingPage = () => {
         <div className="flex items-center justify-between mt-2">
           <p className="text-gray-500 flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            Sprint Planning - Mayo 2025
+            {meetingName}
           </p>
           {meetingActive && (
             <MeetingTimer isRunning={meetingActive} startTime={meetingStartTime} />

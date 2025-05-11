@@ -20,7 +20,7 @@ const Sidebar = ({ children, className = "", defaultCollapsed = false }: Sidebar
     <div className="relative">
       <aside 
         className={cn(
-          "h-screen bg-background border-r transition-all duration-300 ease-in-out",
+          "h-screen bg-background border-r transition-all duration-300 ease-in-out flex-shrink-0",
           collapsed ? "w-16" : "w-64",
           className
         )}
