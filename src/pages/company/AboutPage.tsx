@@ -49,9 +49,9 @@ const AboutPage = () => {
             </div>
             <div className="rounded-lg overflow-hidden h-80 flex items-center justify-center bg-gray-100 p-4">
               <img 
-                src="/lovable-uploads/13a53363-7e73-4d5c-acf0-1662f401864b.png" 
+                src="/lovable-uploads/d0a1641b-948d-4df5-8b3c-ad9a9fd603a6.png" 
                 alt="Logo PromptHunters" 
-                className="w-full h-full object-contain"
+                className="w-full h-full object-cover"
               />
             </div>
           </div>
