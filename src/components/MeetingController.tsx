@@ -7,13 +7,15 @@ import MeetingTimer from '@/components/MeetingTimer';
 import { toast } from 'sonner';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useMeetingContext } from '@/context/MeetingContext';
 
 interface MeetingControllerProps {
   onStartMeeting: (meetingName: string) => void;
 }
 
 const MeetingController: React.FC<MeetingControllerProps> = ({ onStartMeeting }) => {
-  const [meetingName, setMeetingName] = useState('Sprint Planning - Mayo 2025');
+  const { meetingState } = useMeetingContext();
+  const [meetingName, setMeetingName] = useState(meetingState.meetingName);
   
   const handleStartMeeting = () => {
     if (!meetingName.trim()) {

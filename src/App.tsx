@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from '@/context/AuthContext';
+import { MeetingProvider } from '@/context/MeetingContext';
 import Layout from "@/pages/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -31,66 +32,68 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Layout>
-            <Routes>
-              <Route 
-                path="/" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route 
-                path="/meeting" 
-                element={
-                  <ProtectedRoute>
-                    <MeetingPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/summaries" 
-                element={
-                  <ProtectedRoute>
-                    <SummariesPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/logbook" 
-                element={
-                  <ProtectedRoute>
-                    <LogbookPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/tasks" 
-                element={
-                  <ProtectedRoute>
-                    <TasksPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/decisions" 
-                element={
-                  <ProtectedRoute>
-                    <DecisionsPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
-      </TooltipProvider>
+      <MeetingProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Layout>
+              <Routes>
+                <Route 
+                  path="/" 
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route 
+                  path="/meeting" 
+                  element={
+                    <ProtectedRoute>
+                      <MeetingPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/summaries" 
+                  element={
+                    <ProtectedRoute>
+                      <SummariesPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/logbook" 
+                  element={
+                    <ProtectedRoute>
+                      <LogbookPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/tasks" 
+                  element={
+                    <ProtectedRoute>
+                      <TasksPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/decisions" 
+                  element={
+                    <ProtectedRoute>
+                      <DecisionsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          </BrowserRouter>
+        </TooltipProvider>
+      </MeetingProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

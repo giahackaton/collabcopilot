@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useMeetingSummary } from '@/hooks/useMeetingSummary';
+import { useMeetingContext } from '@/context/MeetingContext';
 import {
   Dialog,
   DialogContent,
@@ -22,7 +23,8 @@ interface MeetingActionsProps {
 
 const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants }) => {
   const [showEndMeetingDialog, setShowEndMeetingDialog] = useState(false);
-  const [meetingTitle, setMeetingTitle] = useState('Sprint Meeting');
+  const { meetingState, resetMeeting } = useMeetingContext();
+  const [meetingTitle, setMeetingTitle] = useState(meetingState.meetingName);
   const { generateSummary, loading } = useMeetingSummary();
 
   const handleFinishMeeting = async () => {
@@ -47,6 +49,7 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
     );
     
     if (success) {
+      resetMeeting(); // Reset meeting state after successful summary generation
       setShowEndMeetingDialog(false);
     }
   };

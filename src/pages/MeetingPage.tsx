@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/context/AuthContext';
+import { useMeetingContext } from '@/context/MeetingContext';
 import MeetingActions from '@/components/MeetingActions';
 import {
   MessageSquare, Send, Mic, User, Search, Download, Copy,
@@ -21,44 +22,46 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import MeetingTimer from '@/components/MeetingTimer';
 import MeetingController from '@/components/MeetingController';
-
-interface Message {
-  id: string;
-  content: string;
-  sender: string;
-  sender_name?: string;
-  timestamp: string;
-  isAI: boolean;
-}
-
-interface Participant {
-  email: string;
-  name: string;
-  id?: string;
-}
+import { type Message, type Participant } from '@/context/MeetingContext';
 
 const MeetingPage = () => {
   const { session } = useAuth();
+  const { 
+    meetingState, 
+    setMeetingActive, 
+    setMeetingName, 
+    addMessage, 
+    addParticipant,
+    setIsRecording 
+  } = useMeetingContext();
+  
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
   const [newParticipant, setNewParticipant] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [participants, setParticipants] = useState<Participant[]>([]);
   const [isInviting, setIsInviting] = useState(false);
   const [emailError, setEmailError] = useState('');
-  const [meetingActive, setMeetingActive] = useState(false);
-  const [meetingStartTime, setMeetingStartTime] = useState<Date | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [meetingName, setMeetingName] = useState('Sprint Planning - Mayo 2025');
 
-  // Fetch participants and messages when component mounts
+  // Destructure meeting state for easier access
+  const {
+    isActive: meetingActive,
+    meetingName,
+    messages,
+    participants,
+    startTime: meetingStartTime,
+    isRecording
+  } = meetingState;
+
+  // Fetch user profile when component mounts
   useEffect(() => {
     if (session.user) {
-      fetchParticipants();
       fetchUserProfile();
+      // If meeting already has participants, don't fetch again
+      if (participants.length === 0) {
+        fetchParticipants();
+      }
     }
   }, [session.user]);
 
@@ -89,7 +92,10 @@ const MeetingPage = () => {
         id: session.user?.id
       };
       
-      setParticipants([currentUser]);
+      // Only add the current user if no participants exist yet
+      if (participants.length === 0) {
+        addParticipant(currentUser);
+      }
     } catch (error) {
       console.error('Error fetching participants:', error);
       toast.error('No se pudieron cargar los participantes');
@@ -97,9 +103,7 @@ const MeetingPage = () => {
   };
 
   const startMeeting = (name: string) => {
-    setMeetingActive(true);
-    setMeetingStartTime(new Date());
-    setMeetingName(name);
+    setMeetingActive(true, name);
     
     // Add system message
     const systemMessage: Message = {
@@ -111,7 +115,7 @@ const MeetingPage = () => {
       isAI: true
     };
     
-    setMessages([systemMessage]);
+    addMessage(systemMessage);
     toast.success('Reunión iniciada correctamente');
   };
 
@@ -128,7 +132,7 @@ const MeetingPage = () => {
       isAI: false
     };
     
-    setMessages(prevMessages => [...prevMessages, newMessage]);
+    addMessage(newMessage);
     
     // Generate AI response after a short delay
     setTimeout(() => {
@@ -141,7 +145,7 @@ const MeetingPage = () => {
         isAI: true
       };
       
-      setMessages(prevMessages => [...prevMessages, aiResponse]);
+      addMessage(aiResponse);
     }, 1000);
     
     setMessage('');
@@ -194,7 +198,7 @@ const MeetingPage = () => {
         body: {
           email: newParticipant,
           sender: session.user?.email,
-          meetingTitle: 'Sprint Planning - Mayo 2025'
+          meetingTitle: meetingName
         }
       });
       
@@ -213,7 +217,7 @@ const MeetingPage = () => {
       }
       
       // Add to participants list only if email was sent successfully
-      setParticipants(prev => [...prev, newParticipantObj]);
+      addParticipant(newParticipantObj);
       toast.success(`Invitación enviada a ${newParticipant}`);
       setNewParticipant('');
       setShowParticipantsDialog(false);
