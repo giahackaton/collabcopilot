@@ -179,7 +179,7 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChang
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Perfil de Usuario</DialogTitle>
           <DialogDescription>
@@ -187,93 +187,95 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChang
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 pr-4 max-h-[60vh]">
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            </div>
-          ) : (
-            <div className="grid gap-4 py-4">
-              <div className="flex flex-col items-center space-y-4 mb-4">
-                <Avatar className="h-24 w-24">
-                  {formData.avatar_url ? (
-                    <AvatarImage src={formData.avatar_url} />
-                  ) : (
-                    <AvatarFallback>{formData.username?.[0]?.toUpperCase() || session.user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
-                  )}
-                </Avatar>
+        <div className="py-4 h-[60vh] overflow-hidden">
+          <ScrollArea className="h-full pr-4">
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              </div>
+            ) : (
+              <div className="grid gap-4 py-4">
+                <div className="flex flex-col items-center space-y-4 mb-4">
+                  <Avatar className="h-24 w-24">
+                    {formData.avatar_url ? (
+                      <AvatarImage src={formData.avatar_url} />
+                    ) : (
+                      <AvatarFallback>{formData.username?.[0]?.toUpperCase() || session.user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
+                    )}
+                  </Avatar>
+                  
+                  <input
+                    type="file" 
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                  />
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="flex items-center gap-2"
+                  >
+                    {uploadingAvatar ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    {uploadingAvatar ? "Subiendo..." : "Subir avatar"}
+                  </Button>
+                </div>
                 
-                <input
-                  type="file" 
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                />
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Correo Electrónico</Label>
+                  <Input id="email" value={session.user?.email || ''} disabled />
+                  <p className="text-xs text-gray-500">El correo electrónico no se puede cambiar</p>
+                </div>
                 
-                <Button 
-                  variant="outline" 
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingAvatar}
-                  className="flex items-center gap-2"
-                >
-                  {uploadingAvatar ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
-                  )}
-                  {uploadingAvatar ? "Subiendo..." : "Subir avatar"}
-                </Button>
+                <div className="grid gap-2">
+                  <Label htmlFor="username">Nombre de Usuario</Label>
+                  <Input 
+                    id="username" 
+                    value={formData.username} 
+                    onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="fullName">Nombre Completo</Label>
+                  <Input 
+                    id="fullName" 
+                    value={formData.full_name} 
+                    onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                  />
+                </div>
+                
+                <div className="grid gap-2 mt-4">
+                  <Label htmlFor="password">Nueva Contraseña</Label>
+                  <Input 
+                    id="password" 
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                  <Input 
+                    id="confirmPassword" 
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
               </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="email">Correo Electrónico</Label>
-                <Input id="email" value={session.user?.email || ''} disabled />
-                <p className="text-xs text-gray-500">El correo electrónico no se puede cambiar</p>
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="username">Nombre de Usuario</Label>
-                <Input 
-                  id="username" 
-                  value={formData.username} 
-                  onChange={(e) => setFormData({...formData, username: e.target.value})}
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="fullName">Nombre Completo</Label>
-                <Input 
-                  id="fullName" 
-                  value={formData.full_name} 
-                  onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-                />
-              </div>
-              
-              <div className="grid gap-2 mt-4">
-                <Label htmlFor="password">Nueva Contraseña</Label>
-                <Input 
-                  id="password" 
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-                <Input 
-                  id="confirmPassword" 
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-        </ScrollArea>
+            )}
+          </ScrollArea>
+        </div>
         
-        <DialogFooter className="pt-6 border-t mt-4 sticky bottom-0 bg-background">
+        <DialogFooter className="border-t pt-4 mt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
