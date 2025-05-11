@@ -65,9 +65,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
             No hay mensajes aún. ¡Comienza la conversación!
           </p>
           <p className="text-gray-400 text-xs text-center">
-            {!isLocalMode ? 
-              "Conectando al servidor de chat..." : 
-              "El chat está funcionando en modo local (sin servidor)"}
+            Conectando al servidor de chat...
           </p>
         </div>
       )}
