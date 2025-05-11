@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Layers, Mail, Key, LogIn, UserPlus, ArrowRight, Lock, User, AlertCircle, Check } from 'lucide-react';
+import { Layers, Mail, Key, LogIn, UserPlus, ArrowRight, Lock, User, AlertCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 
 type FormData = {
   email: string;
@@ -18,10 +19,17 @@ type FormData = {
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp, error } = useAuth();
+  const { signIn, signUp, error, session } = useAuth();
   const navigate = useNavigate();
   
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>();
+
+  useEffect(() => {
+    // Redirect to dashboard if user is already logged in
+    if (session.user) {
+      navigate('/dashboard');
+    }
+  }, [session.user, navigate]);
 
   const handleAuth = async (data: FormData) => {
     setIsLoading(true);
@@ -30,7 +38,7 @@ const AuthPage = () => {
       if (isLogin) {
         await signIn(data.email, data.password);
         toast.success("¡Bienvenido de nuevo!");
-        navigate('/');
+        navigate('/dashboard');
       } else {
         await signUp(data.email, data.password);
         toast.success("¡Cuenta creada con éxito! Puede iniciar sesión ahora.");
@@ -185,6 +193,11 @@ const AuthPage = () => {
               </span>
             )}
           </Button>
+          <div className="text-center mt-4">
+            <Link to="/" className="text-sm text-blue-600 hover:underline">
+              Volver a la página principal
+            </Link>
+          </div>
         </CardFooter>
       </Card>
     </div>

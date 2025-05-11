@@ -4,14 +4,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from '@/context/AuthContext';
 import { MeetingProvider } from '@/context/MeetingContext';
 import Layout from "@/pages/Layout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Pages
-import Index from "./pages/Index";
+import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import AuthPage from "./pages/AuthPage";
 import MeetingPage from "./pages/MeetingPage";
@@ -41,60 +41,74 @@ function App() {
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <Layout>
-                  <Routes>
-                    <Route 
-                      path="/" 
-                      element={
-                        <ProtectedRoute>
+                <Routes>
+                  {/* Landing page as the root route */}
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/auth" element={<AuthPage />} />
+                  
+                  {/* Protected dashboard routes inside Layout */}
+                  <Route 
+                    path="/dashboard" 
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
                           <Dashboard />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route path="/auth" element={<AuthPage />} />
-                    <Route 
-                      path="/meeting" 
-                      element={
-                        <ProtectedRoute>
+                        </Layout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/meeting" 
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
                           <MeetingPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/summaries" 
-                      element={
-                        <ProtectedRoute>
+                        </Layout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/summaries" 
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
                           <SummariesPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/logbook" 
-                      element={
-                        <ProtectedRoute>
+                        </Layout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/logbook" 
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
                           <LogbookPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/tasks" 
-                      element={
-                        <ProtectedRoute>
+                        </Layout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/tasks" 
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
                           <TasksPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/decisions" 
-                      element={
-                        <ProtectedRoute>
+                        </Layout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/decisions" 
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
                           <DecisionsPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Layout>
+                        </Layout>
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
               </BrowserRouter>
             </TooltipProvider>
           </MeetingProvider>
