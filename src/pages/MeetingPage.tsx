@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +27,7 @@ import { supabase } from '@/integrations/supabase/client';
 import MeetingTimer from '@/components/MeetingTimer';
 import MeetingController from '@/components/MeetingController';
 import { type Message, type Participant } from '@/context/MeetingContext';
+import { v4 as uuidv4 } from 'uuid';
 
 const MeetingPage = () => {
   const { session } = useAuth();
@@ -56,6 +56,7 @@ const MeetingPage = () => {
   const {
     isActive: meetingActive,
     meetingName,
+    meetingId,
     messages,
     participants,
     startTime: meetingStartTime,
@@ -92,11 +93,24 @@ const MeetingPage = () => {
     if (session.user) {
       fetchUserProfile();
       // If meeting already has participants, don't fetch again
-      if (participants.length === 0) {
+      if (participants.length === 0 && meetingActive) {
         fetchParticipants();
       }
     }
   }, [session.user]);
+
+  // Add current user as participant when joining a meeting
+  useEffect(() => {
+    if (meetingActive && session.user && userProfile) {
+      const currentUser = {
+        email: session.user?.email || 'usuario.actual@ejemplo.com',
+        name: userProfile?.full_name || session.user?.email?.split('@')[0] || 'Usuario Actual',
+        id: session.user?.id
+      };
+      
+      addParticipant(currentUser);
+    }
+  }, [meetingActive, session.user, userProfile]);
 
   const fetchUserProfile = async () => {
     if (!session.user) return;
@@ -162,7 +176,7 @@ const MeetingPage = () => {
     
     // Create a new message
     const newMessage: Message = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       content: message,
       sender: session.user?.email || 'anonymous',
       sender_name: userProfile?.full_name || session.user?.email?.split('@')[0] || 'Usuario',
@@ -175,7 +189,7 @@ const MeetingPage = () => {
     // Generate AI response after a short delay
     setTimeout(() => {
       const aiResponse: Message = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         content: 'He registrado tu mensaje y lo tendré en cuenta para el resumen de la reunión.',
         sender: 'ai-assistant',
         sender_name: 'Asistente IA',
