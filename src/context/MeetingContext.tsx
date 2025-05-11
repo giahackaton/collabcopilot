@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import { socketService } from '@/services/socketService';
 
 export interface Message {
   id: string;
@@ -28,6 +28,7 @@ interface MeetingState {
   participants: Participant[];
   startTime: Date | null;
   isRecording: boolean;
+  isConnected: boolean;
 }
 
 interface MeetingContextType {
@@ -47,10 +48,11 @@ const defaultMeetingState: MeetingState = {
   messages: [],
   participants: [],
   startTime: null,
-  isRecording: false
+  isRecording: false,
+  isConnected: false
 };
 
-// Create context with a default value that won't be null
+// Crear contexto con un valor predeterminado que no será nulo
 const MeetingContext = createContext<MeetingContextType>({
   meetingState: defaultMeetingState,
   setMeetingActive: () => {},
@@ -63,11 +65,11 @@ const MeetingContext = createContext<MeetingContextType>({
 
 export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [meetingState, setMeetingState] = useState<MeetingState>(() => {
-    // Try to load the meeting state from session storage on initial load
+    // Intentar cargar el estado de la reunión desde sessionStorage en carga inicial
     const savedState = sessionStorage.getItem('meetingState');
     if (savedState) {
       const parsedState = JSON.parse(savedState);
-      // Convert startTime string back to Date object if it exists
+      // Convertir startTime string de vuelta a objeto Date si existe
       if (parsedState.startTime) {
         parsedState.startTime = new Date(parsedState.startTime);
       }
@@ -76,111 +78,115 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return defaultMeetingState;
   });
 
-  // Save meeting state to session storage whenever it changes
+  // Guardar el estado de la reunión en sessionStorage cuando cambie
   useEffect(() => {
     sessionStorage.setItem('meetingState', JSON.stringify(meetingState));
   }, [meetingState]);
 
-  // Track current subscription
-  const [currentChannel, setCurrentChannel] = useState<any>(null);
-  
-  // Handle realtime subscription cleanup
-  useEffect(() => {
-    return () => {
-      if (currentChannel) {
-        console.log("Limpiando canal de Supabase al desmontar");
-        supabase.removeChannel(currentChannel);
-        setCurrentChannel(null);
-      }
-    };
-  }, [currentChannel]);
-  
-  // Subscribe to realtime updates for meeting messages
+  // Gestionar la conexión Socket.IO cuando la reunión está activa
   useEffect(() => {
     if (!meetingState.isActive || !meetingState.meetingId) {
-      // Cleanup existing channel when meeting becomes inactive
-      if (currentChannel) {
-        console.log("Limpiando canal porque la reunión ya no está activa");
-        supabase.removeChannel(currentChannel);
-        setCurrentChannel(null);
-      }
+      // Desconectar socket si la reunión ya no está activa
+      socketService.disconnect();
       return;
     }
-    
-    // Cleanup any existing channel before creating a new one
-    if (currentChannel) {
-      console.log("Limpiando canal existente antes de crear uno nuevo");
-      supabase.removeChannel(currentChannel);
-      setCurrentChannel(null);
-    }
 
-    console.log(`Suscribiendo al canal: meeting_${meetingState.meetingId}`);
-    
-    // Create a new channel subscription
-    const channel = supabase
-      .channel(`meeting_${meetingState.meetingId}`)
-      .on('broadcast', { event: 'new_message' }, (payload) => {
-        const receivedMessage = payload.payload as Message;
-        console.log('Mensaje recibido:', receivedMessage);
+    // No intentar conectar si no tenemos ID de usuario (debe manejarse en MeetingPage)
+    return () => {
+      // Limpiar sólo en desmontaje del componente o cambio de meetingId
+      if (meetingState.isActive) {
+        socketService.disconnect();
+      }
+    };
+  }, [meetingState.isActive, meetingState.meetingId]);
+
+  // Suscribirse al estado de conexión
+  useEffect(() => {
+    const unsubscribe = socketService.onConnectionStatus((connected) => {
+      setMeetingState(prev => ({
+        ...prev,
+        isConnected: connected
+      }));
+      
+      if (connected && meetingState.isActive) {
+        toast.success('Conectado al chat de la reunión');
+      } else if (!connected && meetingState.isActive) {
+        toast.error('Desconectado del chat de la reunión. Reconectando...');
+      }
+    });
+
+    return unsubscribe;
+  }, [meetingState.isActive]);
+
+  // Suscribirse a nuevos mensajes
+  useEffect(() => {
+    const unsubscribe = socketService.onMessage((message) => {
+      // Verificar que el mensaje sea para esta reunión
+      if (message.meeting_id !== meetingState.meetingId) {
+        return;
+      }
+      
+      // Verificar si este mensaje ya existe en nuestro estado
+      const isDuplicate = meetingState.messages.some(m => m.id === message.id);
+      if (isDuplicate) {
+        console.log('Mensaje duplicado, no agregado:', message);
+        return;
+      }
+      
+      console.log('Añadiendo nuevo mensaje a la lista:', message);
+      setMeetingState(prev => ({
+        ...prev,
+        messages: [...prev.messages, message]
+      }));
+    });
+
+    return unsubscribe;
+  }, [meetingState.meetingId, meetingState.messages]);
+
+  // Suscribirse a eventos de participantes
+  useEffect(() => {
+    const unsubscribe = socketService.onParticipant((data) => {
+      if (data.type === 'new_participant') {
+        const participant = data.participant;
         
-        // Check if this message is from the current user (already in state)
-        // or if it's a duplicate message we've already processed
-        const isDuplicate = meetingState.messages.some(m => m.id === receivedMessage.id);
-        
-        if (!isDuplicate) {
-          console.log('Añadiendo nuevo mensaje a la lista:', receivedMessage);
-          setMeetingState(prev => ({
-            ...prev,
-            messages: [...prev.messages, receivedMessage]
-          }));
-        } else {
-          console.log('Mensaje duplicado, no agregado:', receivedMessage);
+        // Verificar que el participante sea para esta reunión
+        if (data.meetingId !== meetingState.meetingId) {
+          return;
         }
-      })
-      .on('broadcast', { event: 'new_participant' }, (payload) => {
-        const receivedParticipant = payload.payload as Participant;
-        console.log('Participante recibido:', receivedParticipant);
         
-        // Check if participant already exists to avoid duplicates
+        // Verificar si este participante ya existe
         const isDuplicate = meetingState.participants.some(p => 
-          p.email === receivedParticipant.email
+          p.email === participant.email && p.id === participant.id
         );
         
         if (!isDuplicate) {
-          console.log('Añadiendo nuevo participante:', receivedParticipant);
+          console.log('Añadiendo nuevo participante:', participant);
           setMeetingState(prev => ({
             ...prev,
-            participants: [...prev.participants, receivedParticipant]
+            participants: [...prev.participants, participant]
           }));
           
-          // Notify when a new participant joins
-          toast.info(`${receivedParticipant.name} se ha unido a la reunión`);
-        } else {
-          console.log('Participante duplicado, no agregado:', receivedParticipant);
+          // Notificar cuando un participante nuevo se une
+          toast.info(`${participant.name} se ha unido a la reunión`);
         }
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('¡Suscripción exitosa al canal!');
-          setCurrentChannel(channel);
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Error en el canal de Supabase');
-          toast.error('Error de conexión. Intentando reconectar...');
-        } else if (status === 'TIMED_OUT') {
-          console.error('Tiempo de espera agotado en la conexión');
-          toast.error('Tiempo de espera agotado. Intentando reconectar...');
-        }
-      });
+      }
+      
+      else if (data.type === 'participant_left') {
+        const participantId = data.participantId;
+        
+        // Eliminar participante que se ha ido
+        setMeetingState(prev => ({
+          ...prev,
+          participants: prev.participants.filter(p => p.id !== participantId)
+        }));
+        
+        // Notificar cuando un participante se va
+        toast.info(`Un participante ha abandonado la reunión`);
+      }
+    });
 
-    console.log("Canal creado y en proceso de suscripción");
-    setCurrentChannel(channel);
-    
-    return () => {
-      // This cleanup will only run if the component unmounts or dependencies change
-      console.log('Limpiando suscripción al canal');
-      supabase.removeChannel(channel);
-    };
-  }, [meetingState.isActive, meetingState.meetingId]);
+    return unsubscribe;
+  }, [meetingState.meetingId, meetingState.participants]);
 
   const setMeetingActive = (active: boolean, name?: string) => {
     const meetingId = active ? (meetingState.meetingId || uuidv4()) : meetingState.meetingId;
@@ -206,49 +212,43 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
     
-    // First check if message with this ID already exists
+    // Primero comprobar si el mensaje con este ID ya existe
     if (meetingState.messages.some(m => m.id === message.id)) {
       console.log('Mensaje ya existe, no se enviará:', message);
       return;
     }
     
-    // Add message to local state immediately for responsive UI
+    // Añadir mensaje al estado local inmediatamente para UI responsiva
     setMeetingState(prev => ({
       ...prev,
       messages: [...prev.messages, message]
     }));
     
-    // Prepare message with meeting ID
+    // Preparar mensaje con ID de reunión
     const messageWithMeetingId = {
       ...message,
       meeting_id: meetingState.meetingId
     };
     
     try {
-      console.log('Enviando mensaje por broadcast:', messageWithMeetingId);
+      console.log('Enviando mensaje vía Socket.IO:', messageWithMeetingId);
       
-      if (!currentChannel) {
-        console.error('Error: No hay canal activo para enviar mensaje');
+      if (!socketService.isConnected()) {
+        console.error('Error: Socket no conectado para enviar mensaje');
         toast.error('Error de conexión al enviar mensaje');
         return;
       }
       
-      await currentChannel.send({
-        type: 'broadcast',
-        event: 'new_message',
-        payload: messageWithMeetingId
-      });
+      const success = socketService.sendMessage(messageWithMeetingId);
       
-      console.log('Mensaje enviado correctamente por broadcast');
-    } catch (error) {
-      console.error('Error enviando mensaje por broadcast:', error);
-      toast.error('Error al enviar mensaje. Intentando reconectar...');
-      
-      // On error, try to refresh channel connection
-      if (currentChannel) {
-        supabase.removeChannel(currentChannel);
-        setCurrentChannel(null);
+      if (!success) {
+        toast.error('Error al enviar mensaje. Intentando reconectar...');
+      } else {
+        console.log('Mensaje enviado correctamente por Socket.IO');
       }
+    } catch (error) {
+      console.error('Error enviando mensaje:', error);
+      toast.error('Error al enviar mensaje. Intentando reconectar...');
     }
   };
 
@@ -258,44 +258,39 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return;
     }
     
-    // Check if participant already exists locally
+    // Verificar si el participante ya existe localmente
     const exists = meetingState.participants.some(p => p.email === participant.email);
     if (exists) {
       console.log('Participante ya existe localmente, no se añadirá:', participant);
       return;
     }
     
-    // Add participant to local state immediately
+    // Añadir participante al estado local inmediatamente
     setMeetingState(prev => ({
       ...prev,
       participants: [...prev.participants, participant]
     }));
     
     try {
-      console.log('Enviando nuevo participante por broadcast:', participant);
+      console.log('Registrando nuevo participante vía Socket.IO:', participant);
       
-      if (!currentChannel) {
-        console.error('Error: No hay canal activo para enviar participante');
-        toast.error('Error de conexión al añadir participante');
+      if (!socketService.isConnected()) {
+        console.error('Error: Socket no conectado para registrar participante');
         return;
       }
       
-      await currentChannel.send({
-        type: 'broadcast',
-        event: 'new_participant',
-        payload: participant
+      const success = socketService.registerParticipant({
+        ...participant,
+        meetingId: meetingState.meetingId
       });
       
-      console.log('Participante enviado correctamente por broadcast');
-    } catch (error) {
-      console.error('Error enviando participante por broadcast:', error);
-      toast.error('Error al añadir participante');
-      
-      // On error, try to refresh channel connection
-      if (currentChannel) {
-        supabase.removeChannel(currentChannel);
-        setCurrentChannel(null);
+      if (!success) {
+        console.error('Error registrando participante');
+      } else {
+        console.log('Participante registrado correctamente por Socket.IO');
       }
+    } catch (error) {
+      console.error('Error registrando participante:', error);
     }
   };
 
@@ -307,11 +302,8 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const resetMeeting = () => {
-    // Clean up any active channel subscription
-    if (currentChannel) {
-      supabase.removeChannel(currentChannel);
-      setCurrentChannel(null);
-    }
+    // Desconectar Socket.IO
+    socketService.disconnect();
     
     setMeetingState(defaultMeetingState);
     sessionStorage.removeItem('meetingState');

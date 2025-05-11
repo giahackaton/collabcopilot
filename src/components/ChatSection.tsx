@@ -2,7 +2,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, UserPlus } from 'lucide-react';
+import { MessageSquare, UserPlus, Wifi, WifiOff } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import { type Message } from '@/context/MeetingContext';
@@ -10,6 +11,7 @@ import { type Message } from '@/context/MeetingContext';
 interface ChatSectionProps {
   messages: Message[];
   isRecording: boolean;
+  isConnected?: boolean;
   onSendMessage: (message: string) => void;
   onToggleRecording: () => void;
   onShowParticipantsDialog: () => void;
@@ -18,6 +20,7 @@ interface ChatSectionProps {
 const ChatSection: React.FC<ChatSectionProps> = ({
   messages,
   isRecording,
+  isConnected = false,
   onSendMessage,
   onToggleRecording,
   onShowParticipantsDialog
@@ -28,7 +31,13 @@ const ChatSection: React.FC<ChatSectionProps> = ({
         <CardTitle className="text-xl flex justify-between items-center">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-blue-600" />
-            Chat de la Reunión
+            <span>Chat de la Reunión</span>
+            <Badge variant={isConnected ? "outline" : "destructive"} className="ml-2">
+              {isConnected ? 
+                <><Wifi className="h-3 w-3 mr-1" /> Conectado</> : 
+                <><WifiOff className="h-3 w-3 mr-1" /> Desconectado</>
+              }
+            </Badge>
           </div>
           <div className="flex gap-1">
             <Button size="sm" variant="outline" onClick={onShowParticipantsDialog}>
@@ -44,6 +53,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
           onSendMessage={onSendMessage}
           onToggleRecording={onToggleRecording}
           isRecording={isRecording}
+          disabled={!isConnected}
         />
       </CardContent>
     </Card>

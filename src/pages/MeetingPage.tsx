@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useMeetingContext } from '@/context/MeetingContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { socketService } from '@/services/socketService';
 import MeetingHeader from '@/components/MeetingHeader';
 import MeetingController from '@/components/MeetingController';
 import MeetingActions from '@/components/MeetingActions';
@@ -37,54 +38,79 @@ const MeetingPage = () => {
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [isInviting, setIsInviting] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [socketConnected, setSocketConnected] = useState(false);
 
-  // Destructure meeting state for easier access
-  const {
-    isActive: meetingActive,
-    meetingName,
-    meetingId,
-    messages,
-    participants,
-    startTime: meetingStartTime,
-    isRecording
-  } = meetingState;
-
-  // Check for invitation parameters and join meeting automatically
+  // Verificar parámetros de invitación y unirse automáticamente a la reunión
   useEffect(() => {
-    // Check if there are invitation parameters in the URL
+    // Verificar si hay parámetros de invitación en la URL
     const meetingParam = searchParams.get('meeting');
     const inviterParam = searchParams.get('inviter');
     
     if (meetingParam && session.user) {
-      // If there's a meeting name in the URL and user is authenticated
+      // Si hay un nombre de reunión en la URL y el usuario está autenticado
       console.log(`Found meeting parameter: "${meetingParam}" from invitation link`);
       
-      // Auto join the meeting with the given name
+      // Auto-unirse a la reunión con el nombre dado
       startMeeting(meetingParam);
       
-      // Add a notification that user joined via invitation
+      // Añadir notificación de que el usuario se unió por invitación
       if (inviterParam) {
         toast.success(`Te has unido a la reunión "${meetingParam}" invitado por ${inviterParam}`);
       } else {
         toast.success(`Te has unido a la reunión "${meetingParam}"`);
       }
       
-      // Clear the URL parameters to avoid re-joining on refresh
+      // Limpiar los parámetros de URL para evitar volver a unirse al refrescar
       navigate('/meeting', { replace: true });
     }
   }, [searchParams, session.user]);
 
-  // Fetch user profile when component mounts
+  // Obtener perfil de usuario cuando el componente se monta
   useEffect(() => {
     if (session.user) {
       fetchUserProfile();
     }
   }, [session.user]);
 
-  // Add current user as participant when joining a meeting
+  // Conectar Socket.IO cuando la reunión está activa
   useEffect(() => {
-    if (meetingActive && session.user && userProfile) {
-      console.log("Adding current user as participant");
+    const connectSocket = async () => {
+      if (meetingState.isActive && session.user && userProfile) {
+        console.log("Conectando a Socket.IO para la reunión", meetingState.meetingId);
+        
+        const connected = await socketService.connect({
+          meetingId: meetingState.meetingId,
+          userId: session.user.id,
+          userName: userProfile?.full_name || session.user?.email?.split('@')[0] || 'Usuario'
+        });
+        
+        setSocketConnected(connected);
+        
+        if (connected) {
+          console.log("Conexión Socket.IO exitosa");
+        } else {
+          console.error("Error al conectar con Socket.IO");
+          toast.error("Error de conexión al chat. La funcionalidad puede estar limitada.");
+        }
+      }
+    };
+    
+    if (meetingState.isActive && session.user && userProfile) {
+      connectSocket();
+    }
+    
+    return () => {
+      if (socketConnected && !meetingState.isActive) {
+        socketService.disconnect();
+        setSocketConnected(false);
+      }
+    };
+  }, [meetingState.isActive, meetingState.meetingId, session.user, userProfile]);
+
+  // Añadir usuario actual como participante al unirse a una reunión
+  useEffect(() => {
+    if (meetingState.isActive && session.user && userProfile && socketConnected) {
+      console.log("Añadiendo usuario actual como participante");
       
       const currentUser = {
         email: session.user?.email || 'usuario.actual@ejemplo.com',
@@ -94,7 +120,7 @@ const MeetingPage = () => {
       
       addParticipant(currentUser);
     }
-  }, [meetingActive, session.user, userProfile]);
+  }, [meetingState.isActive, session.user, userProfile, socketConnected]);
 
   const fetchUserProfile = async () => {
     if (!session.user) return;
@@ -122,24 +148,28 @@ const MeetingPage = () => {
     
     setMeetingActive(true, name);
     
-    // Add system message
-    const systemMessage: Message = {
-      id: uuidv4(),
-      content: 'La reunión ha comenzado. El asistente de IA está listo para ayudar.',
-      sender: 'system',
-      sender_name: 'Sistema',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isAI: true
-    };
+    // Añadir mensaje del sistema
+    setTimeout(() => {
+      // Esperamos un momento para asegurar que la reunión esté activa
+      const systemMessage: Message = {
+        id: uuidv4(),
+        content: 'La reunión ha comenzado. El asistente de IA está listo para ayudar.',
+        sender: 'system',
+        sender_name: 'Sistema',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isAI: true
+      };
+      
+      addMessage(systemMessage);
+    }, 1000);
     
-    addMessage(systemMessage);
     toast.success('Reunión iniciada correctamente');
   };
 
   const handleSendMessage = (messageText: string) => {
     if (!session.user) return;
     
-    // Create a new message
+    // Crear un nuevo mensaje
     const newMessage: Message = {
       id: uuidv4(),
       content: messageText,
@@ -151,7 +181,7 @@ const MeetingPage = () => {
     
     addMessage(newMessage);
     
-    // Generate AI response after a short delay
+    // Generar respuesta de IA después de un breve retraso
     setTimeout(() => {
       const aiResponse: Message = {
         id: uuidv4(),
@@ -167,30 +197,30 @@ const MeetingPage = () => {
   };
 
   const toggleRecording = () => {
-    setIsRecording(!isRecording);
-    toast.info(isRecording ? 'Grabación detenida' : 'Grabación iniciada');
+    setIsRecording(!meetingState.isRecording);
+    toast.info(meetingState.isRecording ? 'Grabación detenida' : 'Grabación iniciada');
   };
 
   const handleInviteParticipant = async (email: string) => {
     setIsInviting(true);
     
     try {
-      // Create a new participant object
+      // Crear nuevo objeto de participante
       const newParticipantObj: Participant = {
         email: email,
         name: email.split('@')[0] || 'Invitado',
       };
       
-      // Get the current app URL
+      // Obtener la URL actual de la aplicación
       const appUrl = window.location.origin;
       
-      // Send invitation email using edge function
+      // Enviar email de invitación usando edge function
       const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: {
           email: email,
           sender: session.user?.email,
-          meetingTitle: meetingName,
-          appUrl: appUrl // Passing the current app URL
+          meetingTitle: meetingState.meetingName,
+          appUrl: appUrl // Pasando la URL actual de la app
         }
       });
       
@@ -206,7 +236,7 @@ const MeetingPage = () => {
         return;
       }
       
-      // Add to participants list only if email was sent successfully
+      // Añadir a la lista de participantes solo si el email se envió correctamente
       addParticipant(newParticipantObj);
       toast.success(`Invitación enviada a ${email}`);
       setShowParticipantsDialog(false);
@@ -218,7 +248,7 @@ const MeetingPage = () => {
     }
   };
 
-  // Handle viewing participant profile
+  // Manejar visualización del perfil de participante
   const handleViewParticipantProfile = (participant: Participant) => {
     setSelectedParticipant(participant);
     setShowParticipantProfileDialog(true);
@@ -244,6 +274,7 @@ const MeetingPage = () => {
               onSendMessage={handleSendMessage}
               onToggleRecording={toggleRecording}
               onShowParticipantsDialog={() => setShowParticipantsDialog(true)}
+              isConnected={socketConnected}
             />
             
             <div className="mt-6">
