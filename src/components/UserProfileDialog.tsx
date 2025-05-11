@@ -179,7 +179,7 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChang
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh]">
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Perfil de Usuario</DialogTitle>
           <DialogDescription>
@@ -187,7 +187,7 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChang
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="max-h-[70vh] pr-4">
+        <ScrollArea className="flex-1 pr-4 max-h-[60vh]">
           {loading ? (
             <div className="flex justify-center items-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -273,7 +273,7 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChang
           )}
         </ScrollArea>
         
-        <DialogFooter className="mt-4">
+        <DialogFooter className="pt-6 border-t mt-4 sticky bottom-0 bg-background">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
