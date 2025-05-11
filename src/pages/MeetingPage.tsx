@@ -74,16 +74,14 @@ const MeetingPage = () => {
   useEffect(() => {
     if (session.user) {
       fetchUserProfile();
-      // If meeting already has participants, don't fetch again
-      if (participants.length === 0 && meetingActive) {
-        fetchParticipants();
-      }
     }
   }, [session.user]);
 
   // Add current user as participant when joining a meeting
   useEffect(() => {
     if (meetingActive && session.user && userProfile) {
+      console.log("Adding current user as participant");
+      
       const currentUser = {
         email: session.user?.email || 'usuario.actual@ejemplo.com',
         name: userProfile?.full_name || session.user?.email?.split('@')[0] || 'Usuario Actual',
@@ -112,25 +110,6 @@ const MeetingPage = () => {
     }
   };
 
-  const fetchParticipants = async () => {
-    try {
-      // In a real application, you would fetch this from your database
-      const currentUser = {
-        email: session.user?.email || 'usuario.actual@ejemplo.com',
-        name: userProfile?.full_name || session.user?.email?.split('@')[0] || 'Usuario Actual',
-        id: session.user?.id
-      };
-      
-      // Only add the current user if no participants exist yet
-      if (participants.length === 0) {
-        addParticipant(currentUser);
-      }
-    } catch (error) {
-      console.error('Error fetching participants:', error);
-      toast.error('No se pudieron cargar los participantes');
-    }
-  };
-
   const startMeeting = (name: string) => {
     if (!name.trim()) {
       toast.error('Por favor, ingresa un nombre para la reunión');
@@ -154,6 +133,8 @@ const MeetingPage = () => {
   };
 
   const handleSendMessage = (messageText: string) => {
+    if (!session.user) return;
+    
     // Create a new message
     const newMessage: Message = {
       id: uuidv4(),

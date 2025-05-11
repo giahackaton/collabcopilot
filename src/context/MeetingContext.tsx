@@ -72,17 +72,25 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     sessionStorage.setItem('meetingState', JSON.stringify(meetingState));
   }, [meetingState]);
 
+  const [channelSubscribed, setChannelSubscribed] = useState(false);
+  
   // Subscribe to realtime updates for meeting messages
   useEffect(() => {
     if (!meetingState.isActive || !meetingState.meetingId) return;
+    
+    // Prevent duplicate subscription
+    if (channelSubscribed) return;
 
+    console.log(`Subscribing to channel: meeting_${meetingState.meetingId}`);
+    
     // Subscribe to new messages for this meeting
     const channel = supabase
       .channel(`meeting_${meetingState.meetingId}`)
       .on('broadcast', { event: 'new_message' }, (payload) => {
         const message = payload.payload as Message;
-        // Check if message is already in state to prevent duplicates
+        // Ensure the message is not from the current user to prevent duplicates
         if (!meetingState.messages.some(m => m.id === message.id)) {
+          console.log('Received new message from broadcast:', message);
           setMeetingState(prev => ({
             ...prev,
             messages: [...prev.messages, message]
@@ -93,18 +101,26 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const participant = payload.payload as Participant;
         // Check if participant is already in state to prevent duplicates
         if (!meetingState.participants.some(p => p.email === participant.email)) {
+          console.log('Received new participant from broadcast:', participant);
           setMeetingState(prev => ({
             ...prev,
             participants: [...prev.participants, participant]
           }));
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to channel!');
+          setChannelSubscribed(true);
+        }
+      });
 
     return () => {
+      console.log('Unsubscribing from channel');
       supabase.removeChannel(channel);
+      setChannelSubscribed(false);
     };
-  }, [meetingState.isActive, meetingState.meetingId]);
+  }, [meetingState.isActive, meetingState.meetingId, channelSubscribed]);
 
   const setMeetingActive = (active: boolean, name?: string) => {
     const meetingId = active ? (meetingState.meetingId || uuidv4()) : meetingState.meetingId;
@@ -115,6 +131,9 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       meetingId: meetingId,
       startTime: active ? (prev.startTime || new Date()) : prev.startTime
     }));
+    
+    // Reset channel subscription status when meeting status changes
+    if (active) setChannelSubscribed(false);
   };
 
   const setMeetingName = (name: string) => {
@@ -126,6 +145,12 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addMessage = async (message: Message) => {
     if (!meetingState.isActive || !meetingState.meetingId) return;
+    
+    // Prevent adding duplicate messages
+    if (meetingState.messages.some(m => m.id === message.id)) {
+      console.log('Duplicate message detected, not adding:', message);
+      return;
+    }
     
     // Add message to local state
     setMeetingState(prev => ({
@@ -139,6 +164,8 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         ...message,
         meeting_id: meetingState.meetingId
       };
+      
+      console.log('Broadcasting message:', messageWithMeetingId);
       
       await supabase
         .channel(`meeting_${meetingState.meetingId}`)
@@ -158,25 +185,30 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     
     // Check if participant already exists to avoid duplicates
     const exists = meetingState.participants.some(p => p.email === participant.email);
-    if (!exists) {
-      // Add participant to local state
-      setMeetingState(prev => ({
-        ...prev,
-        participants: [...prev.participants, participant]
-      }));
+    if (exists) {
+      console.log('Participant already exists, not adding:', participant);
+      return;
+    }
+    
+    // Add participant to local state
+    setMeetingState(prev => ({
+      ...prev,
+      participants: [...prev.participants, participant]
+    }));
+    
+    // Broadcast new participant to all meeting participants
+    try {
+      console.log('Broadcasting new participant:', participant);
       
-      // Broadcast new participant to all meeting participants
-      try {
-        await supabase
-          .channel(`meeting_${meetingState.meetingId}`)
-          .send({
-            type: 'broadcast',
-            event: 'new_participant',
-            payload: participant
-          });
-      } catch (error) {
-        console.error('Error broadcasting new participant:', error);
-      }
+      await supabase
+        .channel(`meeting_${meetingState.meetingId}`)
+        .send({
+          type: 'broadcast',
+          event: 'new_participant',
+          payload: participant
+        });
+    } catch (error) {
+      console.error('Error broadcasting new participant:', error);
     }
   };
 
@@ -190,6 +222,7 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const resetMeeting = () => {
     setMeetingState(defaultMeetingState);
     sessionStorage.removeItem('meetingState');
+    setChannelSubscribed(false);
   };
 
   return (
