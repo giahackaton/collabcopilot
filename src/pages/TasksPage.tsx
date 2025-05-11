@@ -49,75 +49,82 @@ const TasksPage = () => {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTasks();
-    
-    // Configurar suscripción en tiempo real para actualizaciones de tareas
-    const channel = supabase
-      .channel('tasks-changes')
-      .on(
-        'postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'tasks' 
-        }, 
-        (payload) => {
-          console.log('Nueva tarea detectada:', payload);
-          // Solo agregar si pertenece al usuario actual
-          if (payload.new && payload.new.user_id === session?.user?.id) {
-            setTasks(prevTasks => [payload.new, ...prevTasks]);
-            toast.info('Nueva tarea agregada', {
-              description: `${payload.new.subject}`,
-            });
+    if (session?.user?.id) {
+      fetchTasks();
+      
+      // Configurar suscripción en tiempo real para actualizaciones de tareas
+      const channel = supabase
+        .channel('tasks-changes')
+        .on(
+          'postgres_changes', 
+          { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'tasks' 
+          }, 
+          (payload) => {
+            console.log('Nueva tarea detectada:', payload);
+            // Solo agregar si pertenece al usuario actual
+            if (payload.new && payload.new.user_id === session.user.id) {
+              setTasks(prevTasks => [payload.new, ...prevTasks]);
+              toast.info('Nueva tarea agregada', {
+                description: `${payload.new.subject}`,
+              });
+            }
           }
-        }
-      )
-      .on(
-        'postgres_changes', 
-        { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'tasks' 
-        }, 
-        (payload) => {
-          console.log('Tarea actualizada:', payload);
-          if (payload.new && payload.new.user_id === session?.user?.id) {
-            setTasks(prevTasks => 
-              prevTasks.map(task => 
-                task.id === payload.new.id ? payload.new : task
-              )
-            );
+        )
+        .on(
+          'postgres_changes', 
+          { 
+            event: 'UPDATE', 
+            schema: 'public', 
+            table: 'tasks' 
+          }, 
+          (payload) => {
+            console.log('Tarea actualizada:', payload);
+            if (payload.new && payload.new.user_id === session.user.id) {
+              setTasks(prevTasks => 
+                prevTasks.map(task => 
+                  task.id === payload.new.id ? payload.new : task
+                )
+              );
+            }
           }
-        }
-      )
-      .on(
-        'postgres_changes', 
-        { 
-          event: 'DELETE', 
-          schema: 'public', 
-          table: 'tasks' 
-        }, 
-        (payload) => {
-          console.log('Tarea eliminada:', payload);
-          if (payload.old && payload.old.user_id === session?.user?.id) {
-            setTasks(prevTasks => 
-              prevTasks.filter(task => task.id !== payload.old.id)
-            );
+        )
+        .on(
+          'postgres_changes', 
+          { 
+            event: 'DELETE', 
+            schema: 'public', 
+            table: 'tasks' 
+          }, 
+          (payload) => {
+            console.log('Tarea eliminada:', payload);
+            if (payload.old && payload.old.user_id === session.user.id) {
+              setTasks(prevTasks => 
+                prevTasks.filter(task => task.id !== payload.old.id)
+              );
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [session]);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [session?.user?.id]);
 
   const fetchTasks = async () => {
-    if (!session.user) return;
+    if (!session?.user?.id) {
+      console.log('No hay sesión de usuario, no se pueden cargar las tareas');
+      return;
+    }
     
     try {
       setLoading(true);
+      console.log('Cargando tareas para el usuario:', session.user.id);
+      
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -126,7 +133,7 @@ const TasksPage = () => {
         
       if (error) throw error;
       
-      console.log('Tareas cargadas:', data);
+      console.log('Tareas cargadas:', data?.length || 0, 'tareas encontradas');
       setTasks(data || []);
     } catch (error) {
       console.error('Error fetching tasks:', error);
