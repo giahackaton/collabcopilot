@@ -61,7 +61,9 @@ serve(async (req) => {
     
     // Use the actual app URL if provided, or fallback to a default relative path
     // This ensures the invitation links to the current application instance
-    const baseUrl = appUrl || window.location.origin;
+    const baseUrl = appUrl || 'https://meeting-ai.app';
+    
+    // Use /meeting instead of /join to ensure we go to the right page
     const joinLink = `${baseUrl}/meeting?meeting=${encodeURIComponent(meetingTitle)}&inviter=${encodeURIComponent(sender)}`;
     
     console.log(`Generated join link: ${joinLink} using base URL: ${baseUrl}`);

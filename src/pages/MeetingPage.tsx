@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ const MeetingPage = () => {
   } = useMeetingContext();
   
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [message, setMessage] = useState('');
   const [showParticipantsDialog, setShowParticipantsDialog] = useState(false);
@@ -68,20 +70,22 @@ const MeetingPage = () => {
     
     if (meetingParam && session.user) {
       // If there's a meeting name in the URL and user is authenticated
-      if (!meetingActive) {
-        console.log(`Automatically joining meeting "${meetingParam}" from invitation link`);
-        // Auto join the meeting with the given name
-        startMeeting(meetingParam);
-        
-        // Add a notification that user joined via invitation
-        if (inviterParam) {
-          toast.success(`Te has unido a la reunión "${meetingParam}" invitado por ${inviterParam}`);
-        } else {
-          toast.success(`Te has unido a la reunión "${meetingParam}"`);
-        }
+      console.log(`Found meeting parameter: "${meetingParam}" from invitation link`);
+      
+      // Auto join the meeting with the given name
+      startMeeting(meetingParam);
+      
+      // Add a notification that user joined via invitation
+      if (inviterParam) {
+        toast.success(`Te has unido a la reunión "${meetingParam}" invitado por ${inviterParam}`);
+      } else {
+        toast.success(`Te has unido a la reunión "${meetingParam}"`);
       }
+      
+      // Clear the URL parameters to avoid re-joining on refresh
+      navigate('/meeting', { replace: true });
     }
-  }, [searchParams, session.user, meetingActive]);
+  }, [searchParams, session.user]);
 
   // Fetch user profile when component mounts
   useEffect(() => {
@@ -132,6 +136,11 @@ const MeetingPage = () => {
   };
 
   const startMeeting = (name: string) => {
+    if (!name.trim()) {
+      toast.error('Por favor, ingresa un nombre para la reunión');
+      return;
+    }
+    
     setMeetingActive(true, name);
     
     // Add system message
