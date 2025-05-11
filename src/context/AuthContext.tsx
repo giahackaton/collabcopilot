@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '../types/auth';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from "sonner";
 
 type AuthContextType = {
   session: Session;
@@ -24,6 +25,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log('Auth state changed:', event, currentSession?.user?.id);
+        
         if (currentSession?.user) {
           setSession({
             user: {
@@ -44,6 +47,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log('Initial session check:', currentSession?.user?.id);
+      
       if (currentSession?.user) {
         setSession({
           user: {
@@ -119,9 +124,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       setError(null);
+      console.log('Iniciando cierre de sesión...');
+      
       const { error } = await supabase.auth.signOut();
-      if (error) throw new Error(error.message);
+      
+      if (error) {
+        console.error('Error al cerrar sesión:', error);
+        throw new Error(error.message);
+      }
+      
+      console.log('Sesión cerrada exitosamente');
+      toast.success("Sesión cerrada exitosamente");
+      
+      // Asegurar que el estado de la sesión se actualice correctamente
+      setSession({
+        user: null,
+        isLoading: false
+      });
     } catch (err: any) {
+      console.error('Error en función signOut:', err);
       setError(err.message);
     }
   };

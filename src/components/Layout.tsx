@@ -58,9 +58,22 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, [session?.user]);
   
-  const handleSignOut = () => {
-    signOut();
-    navigate('/');
+  // Verificar si el usuario está autenticado, si no, redirigir a la página de autenticación
+  useEffect(() => {
+    if (!session.isLoading && !session.user && !location.pathname.startsWith('/auth')) {
+      console.log('No hay sesión activa, redirigiendo a /auth');
+      navigate('/auth');
+    }
+  }, [session, location.pathname, navigate]);
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      console.log('Navegando a la página principal después del cierre de sesión');
+      navigate('/');
+    } catch (error) {
+      console.error('Error durante el cierre de sesión:', error);
+    }
   };
 
   // Don't show navigation on auth pages

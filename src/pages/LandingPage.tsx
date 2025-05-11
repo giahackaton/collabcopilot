@@ -1,6 +1,6 @@
-
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -15,6 +15,17 @@ import {
 } from 'lucide-react';
 
 const LandingPage = () => {
+  const { session } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleGetStarted = () => {
+    if (session.user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -29,10 +40,14 @@ const LandingPage = () => {
                 La solución integral para reuniones colaborativas eficientes. Captura decisiones, genera resúmenes automáticamente y da seguimiento a las tareas sin esfuerzo.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-white text-indigo-700 hover:bg-indigo-50">
-                  <Link to="/auth" className="flex items-center">
+                <Button 
+                  size="lg" 
+                  className="bg-white text-indigo-700 hover:bg-indigo-50"
+                  onClick={handleGetStarted}
+                >
+                  <span className="flex items-center">
                     Comenzar ahora <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
+                  </span>
                 </Button>
                 <Button variant="outline" size="lg" className="border-white text-white hover:bg-indigo-700">
                   <Link to="/features">Ver demostración</Link>
@@ -284,10 +299,14 @@ const LandingPage = () => {
             Únete a los equipos que están optimizando su colaboración con CollabCopilot. Comienza gratis y descubre la diferencia.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-indigo-700 hover:bg-indigo-50">
-              <Link to="/auth" className="flex items-center">
+            <Button 
+              size="lg" 
+              className="bg-white text-indigo-700 hover:bg-indigo-50"
+              onClick={handleGetStarted}
+            >
+              <span className="flex items-center">
                 Registrarse gratis <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+              </span>
             </Button>
             <Button variant="outline" size="lg" className="border-white text-white hover:bg-indigo-700">
               <Link to="/contact">Contactar ventas</Link>
