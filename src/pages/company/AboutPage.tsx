@@ -19,7 +19,7 @@ const AboutPage = () => {
     },
     {
       name: "Edwin Calvo Rincon",
-      position: "Ingeniero Full Stack",
+      position: "Fundador & Desarrollador",
       bio: "Especialista en Soluciones con Agentes conversacionales con experiencia en desarrollo web y aplicaciones basadas en IA. Especializado en crear soluciones innovadoras.",
       image: "/lovable-uploads/261dd8c6-63b0-4842-98e1-7545cbcc726a.png"
     }
