@@ -45,15 +45,23 @@ const ScriptSelector: React.FC<ScriptSelectorProps> = ({ onScriptActivate }) => 
     }
   };
 
+  // Solo mostrar en desarrollo o localhost
+  const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+  
+  if (!isDevelopment) {
+    return null;
+  }
+
   return (
     <>
       <Button
         variant="ghost"
         size="sm"
         onClick={() => setShowDialog(true)}
-        className="opacity-30 hover:opacity-100 transition-opacity"
+        className="opacity-10 hover:opacity-40 transition-opacity"
+        style={{ fontSize: '10px' }}
       >
-        <span className="text-xs">Modo Presentación</span>
+        MP
       </Button>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -62,6 +70,7 @@ const ScriptSelector: React.FC<ScriptSelectorProps> = ({ onScriptActivate }) => 
             <DialogTitle>Modo Presentación</DialogTitle>
             <DialogDescription>
               Selecciona un guión predefinido para la demostración.
+              Los guiones se encuentran en el archivo src/scripts/demo-scripts.txt
             </DialogDescription>
           </DialogHeader>
 
