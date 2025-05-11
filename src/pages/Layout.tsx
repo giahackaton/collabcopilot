@@ -40,12 +40,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userProfile, setUserProfile] = useState<{username?: string, avatar_url?: string}>({});
   
-  // Fetch user profile data when session changes
+  // Fetch user profile data when session changes or when profile is updated
   useEffect(() => {
     if (session.user) {
       fetchUserProfile();
     }
-  }, [session.user]);
+  }, [session.user, isUserProfileOpen]);
 
   const fetchUserProfile = async () => {
     if (!session.user) return;
@@ -102,7 +102,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
-        <Sidebar defaultCollapsed={false}>
+        <Sidebar defaultCollapsed={sidebarCollapsed}>
           <div className="mb-6">
             <h1 className={`text-xl font-bold text-blue-600 flex items-center gap-2 ${sidebarCollapsed ? "justify-center" : ""}`}>
               <Layers className="h-5 w-5" />
@@ -292,7 +292,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* User Profile Dialog */}
       <UserProfileDialog 
         open={isUserProfileOpen} 
-        onOpenChange={setIsUserProfileOpen} 
+        onOpenChange={setIsUserProfileOpen}
+        onProfileUpdated={fetchUserProfile} 
       />
     </div>
   );

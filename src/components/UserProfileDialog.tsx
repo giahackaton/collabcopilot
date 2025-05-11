@@ -21,6 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface UserProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onProfileUpdated?: () => void;
 }
 
 interface UserProfileData {
@@ -29,7 +30,11 @@ interface UserProfileData {
   avatar_url?: string;
 }
 
-const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChange }) => {
+const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ 
+  open, 
+  onOpenChange,
+  onProfileUpdated 
+}) => {
   const { session } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -165,6 +170,11 @@ const UserProfileDialog: React.FC<UserProfileDialogProps> = ({ open, onOpenChang
         toast.error('Las contraseñas no coinciden');
         setUpdating(false);
         return;
+      }
+      
+      // Call the onProfileUpdated callback if provided
+      if (onProfileUpdated) {
+        onProfileUpdated();
       }
       
       toast.success('Perfil actualizado correctamente');
