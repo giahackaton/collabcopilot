@@ -72,55 +72,106 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     sessionStorage.setItem('meetingState', JSON.stringify(meetingState));
   }, [meetingState]);
 
-  const [channelSubscribed, setChannelSubscribed] = useState(false);
+  // Track current subscription
+  const [currentChannel, setCurrentChannel] = useState<any>(null);
+  
+  // Handle realtime subscription cleanup
+  useEffect(() => {
+    return () => {
+      if (currentChannel) {
+        console.log("Limpiando canal de Supabase al desmontar");
+        supabase.removeChannel(currentChannel);
+        setCurrentChannel(null);
+      }
+    };
+  }, [currentChannel]);
   
   // Subscribe to realtime updates for meeting messages
   useEffect(() => {
-    if (!meetingState.isActive || !meetingState.meetingId) return;
+    if (!meetingState.isActive || !meetingState.meetingId) {
+      // Cleanup existing channel when meeting becomes inactive
+      if (currentChannel) {
+        console.log("Limpiando canal porque la reunión ya no está activa");
+        supabase.removeChannel(currentChannel);
+        setCurrentChannel(null);
+      }
+      return;
+    }
     
-    // Prevent duplicate subscription
-    if (channelSubscribed) return;
+    // Cleanup any existing channel before creating a new one
+    if (currentChannel) {
+      console.log("Limpiando canal existente antes de crear uno nuevo");
+      supabase.removeChannel(currentChannel);
+      setCurrentChannel(null);
+    }
 
-    console.log(`Subscribing to channel: meeting_${meetingState.meetingId}`);
+    console.log(`Suscribiendo al canal: meeting_${meetingState.meetingId}`);
     
-    // Subscribe to new messages for this meeting
+    // Create a new channel subscription
     const channel = supabase
       .channel(`meeting_${meetingState.meetingId}`)
       .on('broadcast', { event: 'new_message' }, (payload) => {
-        const message = payload.payload as Message;
-        // Ensure the message is not from the current user to prevent duplicates
-        if (!meetingState.messages.some(m => m.id === message.id)) {
-          console.log('Received new message from broadcast:', message);
+        const receivedMessage = payload.payload as Message;
+        console.log('Mensaje recibido:', receivedMessage);
+        
+        // Check if this message is from the current user (already in state)
+        // or if it's a duplicate message we've already processed
+        const isDuplicate = meetingState.messages.some(m => m.id === receivedMessage.id);
+        
+        if (!isDuplicate) {
+          console.log('Añadiendo nuevo mensaje a la lista:', receivedMessage);
           setMeetingState(prev => ({
             ...prev,
-            messages: [...prev.messages, message]
+            messages: [...prev.messages, receivedMessage]
           }));
+        } else {
+          console.log('Mensaje duplicado, no agregado:', receivedMessage);
         }
       })
       .on('broadcast', { event: 'new_participant' }, (payload) => {
-        const participant = payload.payload as Participant;
-        // Check if participant is already in state to prevent duplicates
-        if (!meetingState.participants.some(p => p.email === participant.email)) {
-          console.log('Received new participant from broadcast:', participant);
+        const receivedParticipant = payload.payload as Participant;
+        console.log('Participante recibido:', receivedParticipant);
+        
+        // Check if participant already exists to avoid duplicates
+        const isDuplicate = meetingState.participants.some(p => 
+          p.email === receivedParticipant.email
+        );
+        
+        if (!isDuplicate) {
+          console.log('Añadiendo nuevo participante:', receivedParticipant);
           setMeetingState(prev => ({
             ...prev,
-            participants: [...prev.participants, participant]
+            participants: [...prev.participants, receivedParticipant]
           }));
+          
+          // Notify when a new participant joins
+          toast.info(`${receivedParticipant.name} se ha unido a la reunión`);
+        } else {
+          console.log('Participante duplicado, no agregado:', receivedParticipant);
         }
       })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to channel!');
-          setChannelSubscribed(true);
+          console.log('¡Suscripción exitosa al canal!');
+          setCurrentChannel(channel);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Error en el canal de Supabase');
+          toast.error('Error de conexión. Intentando reconectar...');
+        } else if (status === 'TIMED_OUT') {
+          console.error('Tiempo de espera agotado en la conexión');
+          toast.error('Tiempo de espera agotado. Intentando reconectar...');
         }
       });
 
+    console.log("Canal creado y en proceso de suscripción");
+    setCurrentChannel(channel);
+    
     return () => {
-      console.log('Unsubscribing from channel');
+      // This cleanup will only run if the component unmounts or dependencies change
+      console.log('Limpiando suscripción al canal');
       supabase.removeChannel(channel);
-      setChannelSubscribed(false);
     };
-  }, [meetingState.isActive, meetingState.meetingId, channelSubscribed]);
+  }, [meetingState.isActive, meetingState.meetingId]);
 
   const setMeetingActive = (active: boolean, name?: string) => {
     const meetingId = active ? (meetingState.meetingId || uuidv4()) : meetingState.meetingId;
@@ -131,9 +182,6 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       meetingId: meetingId,
       startTime: active ? (prev.startTime || new Date()) : prev.startTime
     }));
-    
-    // Reset channel subscription status when meeting status changes
-    if (active) setChannelSubscribed(false);
   };
 
   const setMeetingName = (name: string) => {
@@ -144,71 +192,101 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const addMessage = async (message: Message) => {
-    if (!meetingState.isActive || !meetingState.meetingId) return;
-    
-    // Prevent adding duplicate messages
-    if (meetingState.messages.some(m => m.id === message.id)) {
-      console.log('Duplicate message detected, not adding:', message);
+    if (!meetingState.isActive || !meetingState.meetingId) {
+      console.warn('No se puede enviar mensaje - reunión inactiva');
       return;
     }
     
-    // Add message to local state
+    // First check if message with this ID already exists
+    if (meetingState.messages.some(m => m.id === message.id)) {
+      console.log('Mensaje ya existe, no se enviará:', message);
+      return;
+    }
+    
+    // Add message to local state immediately for responsive UI
     setMeetingState(prev => ({
       ...prev,
       messages: [...prev.messages, message]
     }));
     
-    // Broadcast message to all meeting participants
+    // Prepare message with meeting ID
+    const messageWithMeetingId = {
+      ...message,
+      meeting_id: meetingState.meetingId
+    };
+    
     try {
-      const messageWithMeetingId = {
-        ...message,
-        meeting_id: meetingState.meetingId
-      };
+      console.log('Enviando mensaje por broadcast:', messageWithMeetingId);
       
-      console.log('Broadcasting message:', messageWithMeetingId);
+      if (!currentChannel) {
+        console.error('Error: No hay canal activo para enviar mensaje');
+        toast.error('Error de conexión al enviar mensaje');
+        return;
+      }
       
-      await supabase
-        .channel(`meeting_${meetingState.meetingId}`)
-        .send({
-          type: 'broadcast',
-          event: 'new_message',
-          payload: messageWithMeetingId
-        });
+      await currentChannel.send({
+        type: 'broadcast',
+        event: 'new_message',
+        payload: messageWithMeetingId
+      });
+      
+      console.log('Mensaje enviado correctamente por broadcast');
     } catch (error) {
-      console.error('Error broadcasting message:', error);
-      toast.error('Error sending message');
+      console.error('Error enviando mensaje por broadcast:', error);
+      toast.error('Error al enviar mensaje. Intentando reconectar...');
+      
+      // On error, try to refresh channel connection
+      if (currentChannel) {
+        supabase.removeChannel(currentChannel);
+        setCurrentChannel(null);
+      }
     }
   };
 
   const addParticipant = async (participant: Participant) => {
-    if (!meetingState.isActive || !meetingState.meetingId) return;
-    
-    // Check if participant already exists to avoid duplicates
-    const exists = meetingState.participants.some(p => p.email === participant.email);
-    if (exists) {
-      console.log('Participant already exists, not adding:', participant);
+    if (!meetingState.isActive || !meetingState.meetingId) {
+      console.warn('No se puede añadir participante - reunión inactiva');
       return;
     }
     
-    // Add participant to local state
+    // Check if participant already exists locally
+    const exists = meetingState.participants.some(p => p.email === participant.email);
+    if (exists) {
+      console.log('Participante ya existe localmente, no se añadirá:', participant);
+      return;
+    }
+    
+    // Add participant to local state immediately
     setMeetingState(prev => ({
       ...prev,
       participants: [...prev.participants, participant]
     }));
     
-    // Broadcast new participant to all meeting participants
     try {
-      console.log('Broadcasting new participant:', participant);
+      console.log('Enviando nuevo participante por broadcast:', participant);
       
-      await supabase
-        .channel(`meeting_${meetingState.meetingId}`)
-        .send({
-          type: 'broadcast',
-          event: 'new_participant',
-          payload: participant
-        });
+      if (!currentChannel) {
+        console.error('Error: No hay canal activo para enviar participante');
+        toast.error('Error de conexión al añadir participante');
+        return;
+      }
+      
+      await currentChannel.send({
+        type: 'broadcast',
+        event: 'new_participant',
+        payload: participant
+      });
+      
+      console.log('Participante enviado correctamente por broadcast');
     } catch (error) {
-      console.error('Error broadcasting new participant:', error);
+      console.error('Error enviando participante por broadcast:', error);
+      toast.error('Error al añadir participante');
+      
+      // On error, try to refresh channel connection
+      if (currentChannel) {
+        supabase.removeChannel(currentChannel);
+        setCurrentChannel(null);
+      }
     }
   };
 
@@ -220,9 +298,14 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const resetMeeting = () => {
+    // Clean up any active channel subscription
+    if (currentChannel) {
+      supabase.removeChannel(currentChannel);
+      setCurrentChannel(null);
+    }
+    
     setMeetingState(defaultMeetingState);
     sessionStorage.removeItem('meetingState');
-    setChannelSubscribed(false);
   };
 
   return (
@@ -243,7 +326,7 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({ child
 export const useMeetingContext = () => {
   const context = useContext(MeetingContext);
   if (context === undefined) {
-    throw new Error('useMeetingContext must be used within a MeetingProvider');
+    throw new Error('useMeetingContext debe usarse dentro de un MeetingProvider');
   }
   return context;
 };

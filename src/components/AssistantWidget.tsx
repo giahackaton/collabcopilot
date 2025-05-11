@@ -26,10 +26,10 @@ const AssistantWidget: React.FC = () => {
           </div>
           
           <div className="text-center text-sm text-gray-600 mb-3">
-            <p>Este bot está trabajando en el chat para seguir tu reunión.</p>
+            <p>Este bot está supervisando el chat para resumir tu reunión.</p>
             <div className="flex items-center justify-center mt-2 text-blue-600">
               <PhoneCall size={16} className="mr-1" /> 
-              <span className="font-medium">Para interacciones por voz, usa GIA debajo</span>
+              <span className="font-medium">Para interactuar por voz, utiliza GIA abajo</span>
             </div>
           </div>
           
