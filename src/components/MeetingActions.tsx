@@ -24,7 +24,7 @@ interface MeetingActionsProps {
 const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants }) => {
   const [showEndMeetingDialog, setShowEndMeetingDialog] = useState(false);
   const { meetingState, resetMeeting } = useMeetingContext();
-  const [meetingTitle, setMeetingTitle] = useState(meetingState.meetingName);
+  const [meetingTitle, setMeetingTitle] = useState('');
   const { generateSummary, loading } = useMeetingSummary();
   const [summaryError, setSummaryError] = useState<string | null>(null);
 
@@ -91,20 +91,23 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
     <>
       <Button 
         className="w-full" 
-        onClick={() => setShowEndMeetingDialog(true)}
+        onClick={() => {
+          setMeetingTitle(''); // Reset meeting title to empty when opening dialog
+          setShowEndMeetingDialog(true);
+        }}
       >
         Finalizar Reunión y Generar Resumen
       </Button>
 
       <Dialog open={showEndMeetingDialog} onOpenChange={setShowEndMeetingDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md md:max-w-lg">
           <DialogHeader>
             <DialogTitle>Finalizar Reunión</DialogTitle>
             <DialogDescription>
               Al finalizar la reunión se generará un resumen automáticamente. Por favor, confirma el título de la reunión.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-6">
             <div className="grid gap-2">
               <Label htmlFor="meeting-title">Título de la Reunión</Label>
               <Input
