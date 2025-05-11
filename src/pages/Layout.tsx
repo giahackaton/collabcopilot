@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -88,7 +87,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {profileData.full_name || profileData.username || session.user.email?.split('@')[0]}
+                {profileData.username || session.user.email?.split('@')[0]}
               </p>
               <p className="text-xs text-gray-500 truncate">{session.user.email}</p>
             </div>

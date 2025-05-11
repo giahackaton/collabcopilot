@@ -1,4 +1,3 @@
-
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
@@ -147,6 +146,20 @@ class SocketService {
   
   constructor() {
     this.localEmulator = new LocalEmulator();
+  }
+  
+  // Método para establecer el modo local
+  setUseLocalEmulator(useLocal: boolean): void {
+    if (this.useLocalEmulator !== useLocal) {
+      // Disconnect current connection if any
+      this.disconnect();
+      
+      this.useLocalEmulator = useLocal;
+      console.log(`Modo ${useLocal ? 'local' : 'remoto'} activado`);
+      
+      // Reset reconnect attempts
+      this.reconnectAttempts = 0;
+    }
   }
   
   // Iniciar conexión al socket

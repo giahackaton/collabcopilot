@@ -15,6 +15,7 @@ import AssistantWidget from '@/components/AssistantWidget';
 import ParticipantsCard from '@/components/ParticipantsCard';
 import InviteParticipantDialog from '@/components/InviteParticipantDialog';
 import ParticipantProfileDialog from '@/components/ParticipantProfileDialog';
+import ConnectionModeToggle from '@/components/ConnectionModeToggle';
 import { type Message, type Participant } from '@/context/MeetingContext';
 
 const MeetingPage = () => {
@@ -40,6 +41,7 @@ const MeetingPage = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [socketConnected, setSocketConnected] = useState(false);
   const [scriptEnabled, setScriptEnabled] = useState(false);
+  const [isLocalMode, setIsLocalMode] = useState(true);
 
   // Verificar parámetros de invitación y unirse automáticamente a la reunión
   useEffect(() => {
@@ -132,6 +134,33 @@ const MeetingPage = () => {
       addParticipant(currentUser);
     }
   }, [meetingState.isActive, session.user, userProfile, socketConnected]);
+
+  // Add new effect to handle local mode changes
+  useEffect(() => {
+    if (meetingState.isActive && session.user && userProfile) {
+      // When local mode is toggled, reconnect the socket service
+      socketService.setUseLocalEmulator(isLocalMode);
+      
+      // Reconnect with new mode
+      const reconnect = async () => {
+        const connected = await socketService.connect({
+          meetingId: meetingState.meetingId,
+          userId: session.user.id,
+          userName: userProfile?.username || session.user?.email?.split('@')[0] || 'Usuario'
+        });
+        
+        setSocketConnected(connected);
+        
+        if (connected) {
+          toast.success(`Conectado en modo ${isLocalMode ? 'local' : 'remoto'}`);
+        } else {
+          toast.error("Error de conexión. La funcionalidad puede estar limitada.");
+        }
+      };
+      
+      reconnect();
+    }
+  }, [isLocalMode, meetingState.isActive, meetingState.meetingId, session.user, userProfile]);
 
   const fetchUserProfile = async () => {
     if (!session.user) return;
@@ -313,6 +342,11 @@ const MeetingPage = () => {
     toast.success('Guión activado. Sigue las sugerencias para la conversación simulada.');
   };
 
+  // Toggle local mode handler
+  const handleToggleLocalMode = (localMode: boolean) => {
+    setIsLocalMode(localMode);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <MeetingHeader 
@@ -325,6 +359,14 @@ const MeetingPage = () => {
         <MeetingController onStartMeeting={startMeeting} />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
+          {/* Connection mode toggle */}
+          <div className="lg:col-span-2 mb-2">
+            <ConnectionModeToggle 
+              isLocalMode={isLocalMode}
+              onToggle={handleToggleLocalMode}
+            />
+          </div>
+
           {/* Chat section */}
           <div className="lg:col-span-2 flex flex-col">
             <ChatSection
