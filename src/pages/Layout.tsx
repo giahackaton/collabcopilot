@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { 
@@ -11,13 +11,16 @@ import {
   Search, 
   LogOut, 
   LogIn,
-  Layers
+  Layers,
+  UserRound
 } from 'lucide-react';
+import UserProfileDialog from '@/components/UserProfileDialog';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { session, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   
   const handleSignOut = () => {
     signOut();
@@ -93,6 +96,15 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     Buscar Decisiones
                   </Link>
                 </li>
+                <li>
+                  <button 
+                    onClick={() => setIsProfileOpen(true)}
+                    className="w-full text-left flex items-center gap-2 p-2 rounded hover:bg-blue-100 text-gray-700"
+                  >
+                    <UserRound className="h-4 w-4" />
+                    Mi Perfil
+                  </button>
+                </li>
                 <li className="pt-4 mt-4 border-t">
                   <button 
                     onClick={handleSignOut}
@@ -120,6 +132,12 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       {/* Main content */}
       <main className="flex-1 p-8">{children}</main>
+      
+      {/* User Profile Dialog */}
+      <UserProfileDialog 
+        open={isProfileOpen} 
+        onOpenChange={setIsProfileOpen}
+      />
     </div>
   );
 };
