@@ -9,7 +9,7 @@ const AboutPage = () => {
       name: "Anthony George Yncahuaman Gomez",
       position: "Fundador & Desarrollador",
       bio: "Líder del equipo PromptHunters con experiencia en desarrollo web y aplicaciones basadas en IA. Especializado en crear soluciones innovadoras.",
-      image: "/lovable-uploads/261dd8c6-63b0-4842-98e1-7545cbcc726a.png" 
+      image: "/lovable-uploads/dfc07b1b-6197-4917-a8f1-690ad6226e36.png" 
     },
     {
       name: "Johanna Barragan Arteaga",
@@ -21,7 +21,7 @@ const AboutPage = () => {
       name: "Edwin Calvo Rincon",
       position: "Ingeniero Full Stack",
       bio: "Especialista en Soluciones con Agentes conversacionales con experiencia en desarrollo web y aplicaciones basadas en IA. Especializado en crear soluciones innovadoras.",
-      image: "/lovable-uploads/dfc07b1b-6197-4917-a8f1-690ad6226e36.png"
+      image: "/lovable-uploads/261dd8c6-63b0-4842-98e1-7545cbcc726a.png"
     }
   ];
 
@@ -51,7 +51,7 @@ const AboutPage = () => {
               <img 
                 src="/lovable-uploads/13a53363-7e73-4d5c-acf0-1662f401864b.png" 
                 alt="Logo PromptHunters" 
-                className="max-h-64 max-w-full object-contain"
+                className="w-full h-full object-contain"
               />
             </div>
           </div>
