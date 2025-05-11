@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -342,40 +341,6 @@ const MeetingPage = () => {
                   <p className="text-xs text-gray-500 mt-2">
                     El asistente transcribirá y analizará la conversación
                   </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick actions */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-blue-600" />
-                  Acciones Rápidas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" onClick={searchInMeeting} className="flex-col h-24 space-y-2">
-                    <Search className="h-6 w-6" />
-                    <span className="text-xs">Buscar</span>
-                  </Button>
-                  <Button variant="outline" onClick={exportMeeting} className="flex-col h-24 space-y-2">
-                    <Download className="h-6 w-6" />
-                    <span className="text-xs">Exportar</span>
-                  </Button>
-                  <Button variant="outline" onClick={duplicateMeeting} className="flex-col h-24 space-y-2">
-                    <Copy className="h-6 w-6" />
-                    <span className="text-xs">Duplicar</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="flex-col h-24 space-y-2"
-                    onClick={toggleRecording}
-                  >
-                    {isRecording ? <PauseCircle className="h-6 w-6 text-red-500" /> : <Mic className="h-6 w-6" />}
-                    <span className="text-xs">{isRecording ? 'Detener' : 'Grabar'}</span>
-                  </Button>
                 </div>
               </CardContent>
             </Card>

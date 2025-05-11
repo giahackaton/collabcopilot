@@ -80,6 +80,13 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
     }
   };
 
+  // New function to finish meeting without generating summary
+  const handleFinishWithoutSummary = () => {
+    resetMeeting();
+    setShowEndMeetingDialog(false);
+    toast.success('Reunión finalizada');
+  };
+
   return (
     <>
       <Button 
@@ -125,12 +132,19 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
               </div>
             )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
             <Button variant="outline" onClick={() => {
               setShowEndMeetingDialog(false);
               setSummaryError(null);
             }} disabled={loading}>
               Cancelar
+            </Button>
+            <Button 
+              variant="secondary"
+              onClick={handleFinishWithoutSummary}
+              className="w-full sm:w-auto"
+            >
+              Finalizar sin generar resumen
             </Button>
             <Button onClick={handleFinishMeeting} disabled={loading}>
               {loading ? (
