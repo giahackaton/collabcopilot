@@ -91,7 +91,7 @@ const SupportPage = () => {
               <CardContent className="p-6">
                 <h3 className="text-lg font-bold mb-2">¿Cómo puedo cambiar mi plan de suscripción?</h3>
                 <p className="text-gray-700">
-                  Puedes cambiar tu plan en cualquier momento desde la sección "Configuración > Facturación". Los cambios a un plan superior se aplican inmediatamente, mientras que las reducciones se aplican al final del ciclo de facturación actual.
+                  Puedes cambiar tu plan en cualquier momento desde la sección "Configuración {'>'}  Facturación". Los cambios a un plan superior se aplican inmediatamente, mientras que las reducciones se aplican al final del ciclo de facturación actual.
                 </p>
               </CardContent>
             </Card>
