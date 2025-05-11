@@ -37,7 +37,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
             <span>Chat de la Reunión</span>
             <Badge variant={isConnected ? "outline" : "destructive"} className="ml-2">
               {isConnected ? 
-                <><Laptop className="h-3 w-3 mr-1" /> Modo Local</> : 
+                <><Wifi className="h-3 w-3 mr-1" /> Conectado</> : 
                 <><WifiOff className="h-3 w-3 mr-1" /> Desconectado</>
               }
             </Badge>

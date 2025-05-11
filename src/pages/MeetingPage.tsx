@@ -41,7 +41,7 @@ const MeetingPage = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [socketConnected, setSocketConnected] = useState(false);
   const [scriptEnabled, setScriptEnabled] = useState(false);
-  const [isLocalMode, setIsLocalMode] = useState(true);
+  const [isLocalMode, setIsLocalMode] = useState(false); // Inicialmente intentaremos conectar con el servidor
 
   // Verificar parámetros de invitación y unirse automáticamente a la reunión
   useEffect(() => {
@@ -146,7 +146,7 @@ const MeetingPage = () => {
         const connected = await socketService.connect({
           meetingId: meetingState.meetingId,
           userId: session.user.id,
-          userName: userProfile?.username || session.user?.email?.split('@')[0] || 'Usuario'
+          userName: userProfile?.full_name || session.user?.email?.split('@')[0] || 'Usuario'
         });
         
         setSocketConnected(connected);

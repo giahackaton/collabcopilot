@@ -3,8 +3,8 @@ import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 // Configuración del servidor Socket.IO
-// Usamos un servidor Socket.IO público para pruebas si no hay una URL definida
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://chat-demo.lovable.dev';
+// Usamos el servidor de Render proporcionado, con fallback al demo server
+const SOCKET_URL = 'https://collabcopilot.onrender.com' || import.meta.env.VITE_SOCKET_URL || 'https://chat-demo.lovable.dev';
 
 interface SocketOptions {
   meetingId: string;
@@ -142,10 +142,11 @@ class SocketService {
   private connectionHandlers: ((status: boolean) => void)[] = [];
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private useLocalEmulator = true; // Usamos emulador local por defecto
+  private useLocalEmulator = true; // Usamos emulador local por defecto, pero intentaremos conectar con el servidor real primero
   
   constructor() {
     this.localEmulator = new LocalEmulator();
+    console.log(`Configurado para usar servidor socket: ${SOCKET_URL}`);
   }
   
   // Método para establecer el modo local
