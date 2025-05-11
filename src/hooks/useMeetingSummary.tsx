@@ -21,16 +21,48 @@ export const useMeetingSummary = () => {
       return false;
     }
     
-    // Verify content length
-    if (content.length < 10) {
-      toast.error('El contenido es demasiado corto para generar un resumen significativo');
-      return false;
-    }
-
+    // Verificar si el contenido es un resumen predefinido o contenido de chat
+    const isPreformattedSummary = content.includes('# ') && content.includes('##');
+    
     try {
       setLoading(true);
       toast.info('Generando resumen de la reunión...');
 
+      // Si es un resumen predefinido, lo usamos directamente
+      if (isPreformattedSummary) {
+        console.log('Usando resumen predefinido sin llamar a OpenAI');
+        
+        try {
+          // Almacenar el resumen predefinido directamente en la base de datos
+          const { data, error } = await supabase
+            .from('summaries')
+            .insert([{
+              title,
+              user_id: session.user.id,
+              meeting_content: content, // El contenido original
+              summary: content, // Usamos el mismo contenido como resumen
+              participants,
+            }])
+            .select('*');
+            
+          if (error) {
+            console.error('Error al insertar resumen en base de datos:', error);
+            toast.error(`Error al guardar el resumen: ${error.message}`);
+            return false;
+          }
+          
+          toast.success('Resumen guardado correctamente');
+          navigate('/summaries');
+          return true;
+          
+        } catch (dbError) {
+          console.error('Error al guardar resumen predefinido:', dbError);
+          toast.error('Error al guardar el resumen en la base de datos');
+          return false;
+        }
+      }
+
+      // Si no es un resumen predefinido, usamos OpenAI como antes
       // Call the Supabase Edge Function with improved error handling
       const { data, error } = await supabase.functions.invoke('generate-summary', {
         body: {

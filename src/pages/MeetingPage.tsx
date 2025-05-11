@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,6 +6,7 @@ import { useMeetingContext } from '@/context/MeetingContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { socketService } from '@/services/socketService';
+import { scriptService } from '@/services/scriptService';
 import MeetingHeader from '@/components/MeetingHeader';
 import MeetingController from '@/components/MeetingController';
 import MeetingActions from '@/components/MeetingActions';
@@ -39,6 +39,7 @@ const MeetingPage = () => {
   const [isInviting, setIsInviting] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [scriptEnabled, setScriptEnabled] = useState(false);
 
   // Verificar parámetros de invitación y unirse automáticamente a la reunión
   useEffect(() => {
@@ -191,7 +192,49 @@ const MeetingPage = () => {
     
     addMessage(newMessage);
     
-    // Generar respuesta de IA después de un breve retraso
+    // Verificar si estamos usando un guión
+    if (scriptEnabled) {
+      // Intentar procesar el mensaje según el guión
+      const aiResponse = scriptService.processUserMessage(messageText);
+      
+      if (aiResponse) {
+        // Si hay respuesta del guión, enviarla después de un breve retraso
+        setTimeout(() => {
+          const scriptAiMessage: Message = {
+            id: uuidv4(),
+            content: aiResponse.content,
+            sender: 'ai-assistant',
+            sender_name: 'Asistente IA',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isAI: true
+          };
+          
+          addMessage(scriptAiMessage);
+        }, 1000);
+        
+        return;
+      }
+      
+      // Verificar si el mensaje solicita un resumen
+      if (scriptService.shouldGenerateSummary(messageText)) {
+        setTimeout(() => {
+          const summaryResponseMessage: Message = {
+            id: uuidv4(),
+            content: 'He creado un resumen de la reunión con los puntos clave discutidos.',
+            sender: 'ai-assistant',
+            sender_name: 'Asistente IA',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isAI: true
+          };
+          
+          addMessage(summaryResponseMessage);
+        }, 1000);
+        
+        return;
+      }
+    }
+    
+    // Si no es parte de un guión o no se reconoce, usar respuesta genérica
     setTimeout(() => {
       const aiResponse: Message = {
         id: uuidv4(),
@@ -264,6 +307,12 @@ const MeetingPage = () => {
     setShowParticipantProfileDialog(true);
   };
 
+  // Manejar activación de guión
+  const handleScriptActivate = () => {
+    setScriptEnabled(true);
+    toast.success('Guión activado. Sigue las sugerencias para la conversación simulada.');
+  };
+
   return (
     <div className="flex flex-col h-full">
       <MeetingHeader 
@@ -285,10 +334,15 @@ const MeetingPage = () => {
               onToggleRecording={toggleRecording}
               onShowParticipantsDialog={() => setShowParticipantsDialog(true)}
               isConnected={socketConnected}
+              onScriptActivate={handleScriptActivate}
             />
             
             <div className="mt-6">
-              <MeetingActions messages={meetingState.messages} participants={meetingState.participants} />
+              <MeetingActions 
+                messages={meetingState.messages} 
+                participants={meetingState.participants} 
+                useScriptSummary={scriptEnabled}
+              />
             </div>
           </div>
 

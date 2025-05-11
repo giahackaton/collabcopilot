@@ -6,6 +6,7 @@ import { MessageSquare, UserPlus, Wifi, WifiOff, Laptop } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
+import ScriptSelector from './ScriptSelector';
 import { type Message } from '@/context/MeetingContext';
 
 interface ChatSectionProps {
@@ -15,6 +16,7 @@ interface ChatSectionProps {
   onSendMessage: (message: string) => void;
   onToggleRecording: () => void;
   onShowParticipantsDialog: () => void;
+  onScriptActivate?: () => void;
 }
 
 const ChatSection: React.FC<ChatSectionProps> = ({
@@ -23,7 +25,8 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   isConnected = false,
   onSendMessage,
   onToggleRecording,
-  onShowParticipantsDialog
+  onShowParticipantsDialog,
+  onScriptActivate = () => {}
 }) => {
   return (
     <Card className="flex-1 overflow-hidden">
@@ -39,7 +42,8 @@ const ChatSection: React.FC<ChatSectionProps> = ({
               }
             </Badge>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-2">
+            <ScriptSelector onScriptActivate={onScriptActivate} />
             <Button size="sm" variant="outline" onClick={onShowParticipantsDialog}>
               <UserPlus className="h-4 w-4" />
               <span className="hidden sm:inline ml-2">Invitar</span>

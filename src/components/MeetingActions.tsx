@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useMeetingSummary } from '@/hooks/useMeetingSummary';
 import { useMeetingContext } from '@/context/MeetingContext';
+import { scriptService } from '@/services/scriptService';
 import {
   Dialog,
   DialogContent,
@@ -19,9 +20,14 @@ import { toast } from 'sonner';
 interface MeetingActionsProps {
   messages: any[];
   participants: any[];
+  useScriptSummary?: boolean;
 }
 
-const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants }) => {
+const MeetingActions: React.FC<MeetingActionsProps> = ({ 
+  messages, 
+  participants,
+  useScriptSummary = false
+}) => {
   const [showEndMeetingDialog, setShowEndMeetingDialog] = useState(false);
   const { meetingState, resetMeeting } = useMeetingContext();
   const [meetingTitle, setMeetingTitle] = useState('');
@@ -35,6 +41,41 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
       return;
     }
 
+    // Comprobar si estamos usando un guión predefinido
+    if (useScriptSummary && scriptService.hasActiveScript()) {
+      try {
+        // Usar el resumen predefinido del guión
+        const scriptSummary = scriptService.getScriptSummary();
+        const scriptTitle = scriptService.getActiveScriptTitle();
+        const combinedTitle = meetingTitle || scriptTitle;
+        
+        // Extraer emails de participantes
+        const participantEmails = participants.map(p => p.email).filter(Boolean);
+        
+        // Generar resumen usando el texto predefinido
+        const success = await generateSummary(
+          combinedTitle,
+          scriptSummary,
+          participantEmails
+        );
+        
+        if (success) {
+          resetMeeting();
+          setShowEndMeetingDialog(false);
+          scriptService.resetScript(); // Reiniciar el guión
+        } else {
+          setSummaryError('No se pudo generar el resumen. Intente nuevamente o póngase en contacto con soporte.');
+        }
+        
+        return;
+      } catch (error) {
+        console.error('Error al finalizar reunión con guión:', error);
+        setSummaryError(`Error inesperado: ${error instanceof Error ? error.message : 'Desconocido'}`);
+        return;
+      }
+    }
+
+    // Proceso normal sin guión
     // Check if there are any messages
     if (messages.length <= 1) { // Only the system welcome message
       toast.warning('La reunión no tiene mensajes suficientes para generar un resumen');
@@ -71,6 +112,11 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
       if (success) {
         resetMeeting(); // Reset meeting state after successful summary generation
         setShowEndMeetingDialog(false);
+        
+        // Si había un guión activo, reiniciarlo también
+        if (scriptService.hasActiveScript()) {
+          scriptService.resetScript();
+        }
       } else {
         setSummaryError('No se pudo generar el resumen. Intente nuevamente o póngase en contacto con soporte.');
       }
@@ -84,7 +130,20 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
   const handleFinishWithoutSummary = () => {
     resetMeeting();
     setShowEndMeetingDialog(false);
+    // Si había un guión activo, reiniciarlo también
+    if (scriptService.hasActiveScript()) {
+      scriptService.resetScript();
+    }
     toast.success('Reunión finalizada');
+  };
+
+  // Preparar el título inicial cuando se abre el diálogo
+  const prepareInitialTitle = () => {
+    if (useScriptSummary && scriptService.hasActiveScript()) {
+      setMeetingTitle(scriptService.getActiveScriptTitle());
+    } else {
+      setMeetingTitle('');
+    }
   };
 
   return (
@@ -92,7 +151,7 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
       <Button 
         className="w-full" 
         onClick={() => {
-          setMeetingTitle(''); // Reset meeting title to empty when opening dialog
+          prepareInitialTitle(); // Prepare title when opening dialog
           setShowEndMeetingDialog(true);
         }}
       >
@@ -104,7 +163,9 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
           <DialogHeader>
             <DialogTitle>Finalizar Reunión</DialogTitle>
             <DialogDescription>
-              Al finalizar la reunión se generará un resumen automáticamente. Por favor, confirma el título de la reunión.
+              {useScriptSummary 
+                ? "Se generará un resumen usando el guión predefinido. Confirma o modifica el título."
+                : "Al finalizar la reunión se generará un resumen automáticamente. Por favor, confirma el título de la reunión."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-6">
@@ -114,12 +175,25 @@ const MeetingActions: React.FC<MeetingActionsProps> = ({ messages, participants 
                 id="meeting-title"
                 value={meetingTitle}
                 onChange={(e) => setMeetingTitle(e.target.value)}
-                placeholder="Reunión de Sprint Mayo 2025"
+                placeholder={useScriptSummary ? scriptService.getActiveScriptTitle() : "Reunión de Sprint Mayo 2025"}
               />
             </div>
-            <p className="text-sm text-gray-500">
-              Se generará un resumen de la conversación utilizando IA. Este proceso puede tardar unos segundos.
-            </p>
+            
+            {useScriptSummary && (
+              <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
+                <p className="text-sm text-blue-700 font-medium">Resumen desde guión</p>
+                <p className="text-sm text-blue-600">
+                  Se utilizará el resumen predefinido del guión "{scriptService.getActiveScriptTitle()}" para generar el documento.
+                </p>
+              </div>
+            )}
+            
+            {!useScriptSummary && (
+              <p className="text-sm text-gray-500">
+                Se generará un resumen de la conversación utilizando IA. Este proceso puede tardar unos segundos.
+              </p>
+            )}
+            
             {summaryError && (
               <div className="bg-red-50 p-3 rounded-md border border-red-200">
                 <div className="flex items-start gap-2 text-red-700">

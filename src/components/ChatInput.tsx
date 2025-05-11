@@ -2,8 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mic, PauseCircle, Send, AlertCircle, RefreshCcw } from 'lucide-react';
+import { Mic, PauseCircle, Send, AlertCircle, RefreshCcw, BookOpen } from 'lucide-react';
 import { socketService } from '@/services/socketService';
+import { scriptService } from '@/services/scriptService';
+import { Badge } from "@/components/ui/badge";
+import { toast } from 'sonner';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -20,11 +23,32 @@ const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const [message, setMessage] = useState('');
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [suggestedMessage, setSuggestedMessage] = useState<string | null>(null);
+  const [scriptActive, setScriptActive] = useState(false);
+  
+  // Verificar si hay un guión activo y obtener mensaje sugerido
+  useEffect(() => {
+    const hasActiveScript = scriptService.hasActiveScript();
+    setScriptActive(hasActiveScript);
+    
+    if (hasActiveScript) {
+      const nextMessage = scriptService.getNextUserMessage();
+      setSuggestedMessage(nextMessage?.content || null);
+    } else {
+      setSuggestedMessage(null);
+    }
+  }, [message]); // Se actualiza cuando cambia el mensaje
   
   const handleSend = () => {
     if (!message.trim() || disabled) return;
     onSendMessage(message);
     setMessage('');
+    
+    // Si hay guión activo, verificar si debemos generar respuesta
+    if (scriptActive) {
+      const nextSuggestion = scriptService.getNextUserMessage();
+      setSuggestedMessage(nextSuggestion?.content || null);
+    }
   };
   
   const handleReconnect = async () => {
@@ -38,6 +62,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
       console.error('Error al intentar reconectar:', error);
     } finally {
       setIsReconnecting(false);
+    }
+  };
+
+  const handleUseSuggestion = () => {
+    if (suggestedMessage) {
+      setMessage(suggestedMessage);
+      // No enviamos automáticamente para que el usuario pueda ver lo que va a enviar
     }
   };
 
@@ -61,6 +92,32 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </Button>
         </div>
       )}
+      
+      {scriptActive && suggestedMessage && (
+        <div className="mb-2 p-2 bg-blue-50 border border-blue-100 rounded flex items-center justify-between">
+          <div className="flex items-center text-blue-600 text-sm flex-1">
+            <BookOpen className="h-4 w-4 mr-2 flex-shrink-0" /> 
+            <span className="truncate">{suggestedMessage}</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleUseSuggestion}
+            className="text-blue-600 hover:bg-blue-100 whitespace-nowrap ml-2"
+          >
+            Usar sugerencia
+          </Button>
+        </div>
+      )}
+      
+      {scriptActive && (
+        <div className="flex justify-end mb-2">
+          <Badge variant="outline" className="bg-blue-50 text-blue-600">
+            Modo guión activo
+          </Badge>
+        </div>
+      )}
+      
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
