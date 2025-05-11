@@ -30,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 const TasksPage = () => {
   const { session } = useAuth();
@@ -225,6 +226,7 @@ const TasksPage = () => {
   };
 
   const toggleTaskStatus = async (taskId: string, currentStatus: string) => {
+    // Fix: Always toggle between 'completed' and 'pending'
     const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
     
     try {
@@ -287,6 +289,28 @@ const TasksPage = () => {
         return 'Completada';
       default:
         return status;
+    }
+  };
+  
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          Pendiente
+        </Badge>;
+      case 'in-progress':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+          <Clock className="h-3 w-3 mr-1" />
+          En progreso
+        </Badge>;
+      case 'completed':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          <CheckCircle className="h-3 w-3 mr-1" />
+          Completada
+        </Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -352,9 +376,10 @@ const TasksPage = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead style={{ width: 50 }}>Estado</TableHead>
+                <TableHead style={{ width: 50 }}>Marcar</TableHead>
                 <TableHead>Asunto</TableHead>
                 <TableHead className="hidden sm:table-cell">Fecha Límite</TableHead>
+                <TableHead className="hidden md:table-cell">Estado</TableHead>
                 <TableHead className="hidden lg:table-cell">Descripción</TableHead>
                 <TableHead style={{ width: 100 }}>Acciones</TableHead>
               </TableRow>
@@ -380,6 +405,9 @@ const TasksPage = () => {
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       {task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {getStatusBadge(task.status)}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell max-w-xs truncate">
                       {task.description || '-'}
@@ -408,7 +436,7 @@ const TasksPage = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={6} className="h-24 text-center">
                     <div className="flex flex-col items-center justify-center text-gray-500">
                       <AlertCircle className="h-8 w-8 mb-2" />
                       {searchTerm || statusFilter ? 'No se encontraron tareas con esos criterios' : 'No hay tareas creadas'}
@@ -505,10 +533,7 @@ const TasksPage = () => {
               <div className="flex items-center justify-between">
                 <DialogTitle>{selectedTask.subject}</DialogTitle>
                 <div className="flex items-center gap-2">
-                  {getStatusIcon(selectedTask.status)}
-                  <span className="text-sm font-normal">
-                    {getStatusText(selectedTask.status)}
-                  </span>
+                  {getStatusBadge(selectedTask.status)}
                 </div>
               </div>
             </DialogHeader>
